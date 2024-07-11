@@ -7,116 +7,423 @@
 	},
 	"item": [
 		{
-			"name": "Get Products",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/products/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"products",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Product by ID",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{base_url}}/products/1",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"products",
-						"1"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create Product",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "name",
-							"value": "KIvAKJlkdasd",
-							"type": "text"
-						},
-						{
-							"key": "price",
-							"value": "2.0",
-							"type": "text"
-						},
-						{
-							"key": "article",
-							"value": "the",
-							"type": "text"
-						},
-						{
-							"key": "description",
-							"value": "lkasjdflksdjfhuqwhfjkssad",
-							"type": "text"
-						},
-						{
-							"key": "photo",
-							"type": "file",
-							"src": "postman-cloud:///1eeb9175-e49b-4820-865d-226b50ef8a59"
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"2"
+							]
 						}
-					]
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{base_url}}/products/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"products",
-						""
-					]
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "KIvAKJlkdasd",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "2.0",
+									"type": "text"
+								},
+								{
+									"key": "article",
+									"value": "the",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "lkasjdflksdjfhuqwhfjkssad",
+									"type": "text"
+								},
+								{
+									"key": "photo",
+									"type": "file",
+									"src": "postman-cloud:///1eeb9175-e49b-4820-865d-226b50ef8a59"
+								},
+								{
+									"key": "sectionId",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/products/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Aasdasdasd",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "2.0",
+									"type": "text"
+								},
+								{
+									"key": "article",
+									"value": "the",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "lkasjdflksdjfhuqwhfjkssad",
+									"type": "text"
+								},
+								{
+									"key": "photo",
+									"type": "file",
+									"src": "postman-cloud:///1eeb9175-e49b-4820-865d-226b50ef8a59"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/products/3",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"content\": \"Yuiasdasajkfajkdas\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/products/1/reviews",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"1",
+								"reviews"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								""
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Create Review",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "Catalog",
+			"item": [
+				{
+					"name": "Create Section",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "sectionName",
+									"value": "TA",
+									"type": "text"
+								},
+								{
+									"key": "sectionPhoto",
+									"type": "file",
+									"src": "postman-cloud:///1eeb9175-e49b-4820-865d-226b50ef8a59"
+								},
+								{
+									"key": "",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								""
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{base_url}}/products/1/review",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"products",
-						"1",
-						"review"
-					]
+				{
+					"name": "Add Promotion",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"promotion\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/1/promotion",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"1",
+								"promotion"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add subSection to Section",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"subSectionName\": \"ASdasd\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/1/subsections",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"1",
+								"subsections"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Subsection",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "TA",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/subsections/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"subsections",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Section",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "TA",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "TA",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/products/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"products",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete SubSection",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "TA",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/subsections/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"subsections",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Section",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "TA",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/catalog/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalog",
+								"1"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		}
 	],
 	"event": [

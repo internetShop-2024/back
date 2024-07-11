@@ -26,7 +26,10 @@ productRouter.get('/:id', async (req, res) => {
 
     try {
         const product = await Product.findByPk(id, {
-            include: Review,
+            include: {
+                model: Review,
+                as: "reviews"
+            }
         })
         if (!product) {
             return res.status(404).json({error: 'Product not found'})
@@ -39,9 +42,9 @@ productRouter.get('/:id', async (req, res) => {
 
 //POST
 productRouter.post("/", upload.single("photo"), async (req, res) => {
-    const {name, price, article, description} = req.body
-    const photo = req.file ? req.file.path : null
-    const missingFields = []
+    const {name, price, article, description, sectionId, subSection, promotion} = req.body;
+    const photo = req.file ? req.file.path : null;
+    const missingFields = [];
 
     if (!name) missingFields.push("name");
     if (!price) missingFields.push("price");
@@ -55,23 +58,28 @@ productRouter.post("/", upload.single("photo"), async (req, res) => {
             missingFields: missingFields
         });
     }
+
     try {
         const product = await Product.create({
             photo,
             name,
             price,
             article,
-            description
-        })
+            description,
+            sectionId,
+            subSection,
+            promotion
+        });
 
         if (!product)
-            return res.status(400).status({error: "Product not created"})
+            return res.status(400).json({error: "Product not created"});
 
-        return res.status(201).json({message: "Product successfully created", "product": product})
+        return res.status(201).json({message: "Product successfully created", product});
     } catch (e) {
-        return res.status(500).json({error: e.message})
+        return res.status(500).json({error: e.message});
     }
-})
+});
+
 
 productRouter.post('/:productId/reviews', async (req, res) => {
     const {content} = req.body
@@ -97,5 +105,71 @@ productRouter.post('/:productId/reviews', async (req, res) => {
         return res.status(500).json({error: error.message})
     }
 })
+
+productRouter.put("/:productId", upload.single("photo"), async (req, res) => {
+    const {name, price, article, description, sectionId, subSection, promotion} = req.body;
+    const photo = req.file ? req.file.path : null;
+    const productId = req.params.productId;
+
+    try {
+        const product = await Product.findByPk(productId);
+
+        if (!product) {
+            return res.status(404).json({error: "Product not found"});
+        }
+
+        let changes = [];
+
+        if (name && name !== product.name) {
+            product.name = name;
+            changes.push("Name");
+        }
+        if (price && price !== product.price) {
+            product.price = price;
+            changes.push("Price");
+        }
+        if (article && article !== product.article) {
+            product.article = article;
+            changes.push("Article");
+        }
+        if (description && description !== product.description) {
+            product.description = description;
+            changes.push("Description");
+        }
+        if (sectionId && sectionId !== product.sectionId) {
+            product.sectionId = sectionId;
+            changes.push("Section");
+        }
+        if (subSection && subSection !== product.subSection) {
+            product.subSection = subSection;
+            changes.push("Subsection");
+        }
+        if (promotion !== undefined && promotion !== product.promotion) {
+            product.promotion = promotion;
+            changes.push("Promotion");
+        }
+        if (photo && photo !== product.photo) {
+            product.photo = photo;
+            changes.push("Photo");
+        }
+        if (changes.length > 0) {
+            const editHistoryEntry = {
+                changes: changes.join(", "),
+                editedAt: new Date()
+            };
+            if (!product.editHistory) {
+                product.editHistory = [];
+            }
+            product.editHistory.push(editHistoryEntry);
+        }
+
+        await product.save();
+
+        return res.status(200).json({message: "Product successfully updated", product});
+    } catch (e) {
+        return res.status(500).json({error: e.message});
+    }
+});
+
 
 module.exports = productRouter
