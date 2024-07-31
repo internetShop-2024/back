@@ -15,13 +15,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/products/2",
+							"raw": "{{base_url}}/products/1",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"products",
-								"2"
+								"1"
 							]
 						}
 					},
@@ -58,7 +58,8 @@
 								{
 									"key": "photo",
 									"type": "file",
-									"src": "postman-cloud:///1eeb9175-e49b-4820-865d-226b50ef8a59"
+									"src": "postman-cloud:///1eeb9175-e49b-4820-865d-226b50ef8a59",
+									"disabled": true
 								},
 								{
 									"key": "sectionId",
@@ -450,8 +451,13 @@
 	],
 	"variable": [
 		{
-			"key": "base_url",
+			"key": "base_urls",
 			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "base_url",
+			"value": "superogshmal.pp.ua",
 			"type": "string"
 		}
 	]

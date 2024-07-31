@@ -1,175 +1,195 @@
 const productRouter = require("express").Router()
-const upload = require("../vars/multer")
 
-const {Product, Review} = require("../models")
+const Product = require("../models/productModel")
+const Review = require("../models/reviewModel")
+const Section = require("../models/sectionModel")
+const SubSection = require("../models/subSectionModel")
+const {productReviews} = require("../vars/functions")
 
-//GET
 productRouter.get("/", async (req, res) => {
-    const page = parseInt(req.query.page, 10) || 1
-    const limit = 18
-    const offset = (page - 1) * limit
+    const perPage = 18
+    const page = parseInt(req.query.page) || 1
 
     try {
-        const products = await Product.findAndCountAll({limit, offset})
+        const totalProducts = await Product.countDocuments()
+        const products = await Product.find()
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean()
+
+        const productsWithReviews = await productReviews(products)
+
         return res.status(200).json({
-            totalPages: Math.ceil(products.count / limit),
+            products: productsWithReviews,
             currentPage: page,
-            products: products.rows
+            totalPages: Math.ceil(totalProducts / perPage)
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
-productRouter.get('/:id', async (req, res) => {
-    const {id} = req.params
 
+productRouter.get("/:id", async (req, res) => {
     try {
-        const product = await Product.findByPk(id, {
-            include: {
-                model: Review,
-                as: "reviews"
-            }
+        const productId = req.params.id
+        if (!productId)
+            return res.status(404).json({error: "Product not found"})
+
+        const product = await Product.findOne({_id: productId})
+        return res.status(201).json({product: product})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+
+productRouter.post("/", async (req, res) => {
+    const {
+        photo, name, price, article, description, sectionId, subSectionId, promotion, quantity
+    } = req.body
+    try {
+        const product = new Product({
+            photo: photo,
+            name: name,
+            price: price,
+            article: article,
+            description: description,
+            promotion: promotion,
+            quantity: quantity
         })
-        if (!product) {
-            return res.status(404).json({error: 'Product not found'})
+
+        if (sectionId && subSectionId)
+            return res.status(400).json({error: "You can't assign product to Section and SubSection"})
+
+        const section = await Section.findById(sectionId)
+        const subSection = await SubSection.findById(subSectionId)
+
+        if (section) {
+            section.products.push(product._id)
+            await section.save()
         }
-        return res.status(200).json(product)
+
+        if (subSection) {
+            subSection.products.push(product._id)
+            await subSection.save()
+        }
+
+        await product.save()
+        return res.status(201).json({
+            message: "Successfully created",
+            product: product
+        })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
-
-//POST
-productRouter.post("/", upload.single("photo"), async (req, res) => {
-    const {name, price, article, description, sectionId, subSection, promotion} = req.body;
-    const photo = req.file ? req.file.path : null;
-    const missingFields = [];
-
-    if (!name) missingFields.push("name");
-    if (!price) missingFields.push("price");
-    if (!article) missingFields.push("article");
-    if (!description) missingFields.push("description");
-    if (!photo) missingFields.push("photo");
-
-    if (missingFields.length > 0) {
-        return res.status(400).json({
-            error: "Missing required fields",
-            missingFields: missingFields
-        });
-    }
-
-    try {
-        const product = await Product.create({
-            photo,
-            name,
-            price,
-            article,
-            description,
-            sectionId,
-            subSection,
-            promotion
-        });
-
-        if (!product)
-            return res.status(400).json({error: "Product not created"});
-
-        return res.status(201).json({message: "Product successfully created", product});
-    } catch (e) {
-        return res.status(500).json({error: e.message});
-    }
-});
-
-
-productRouter.post('/:productId/reviews', async (req, res) => {
+productRouter.post("/:id/reviews", async (req, res) => {
     const {content} = req.body
-    const {productId} = req.params
-
-    if (!content) {
-        return res.status(400).json({
-            error: "Missing required fields",
-            missingFields: "content"
-        })
-    }
-
     try {
-        const review = await Review.create({
-            content,
-            productId,
+        const productId = req.params.id
+        const review = new Review({
+            product: productId,
+            content: content
         })
-        if (!review)
-            return res.status(400).json({error: "Review not created"})
 
-        return res.status(201).json(review);
-    } catch (error) {
-        return res.status(500).json({error: error.message})
+        const product = await Product.findById(productId)
+        await product.reviews.push(review._id)
+
+
+        await review.save()
+        await product.save()
+        return res.status(201).json({
+            message: "Successfully created",
+            review: review
+        })
+    } catch (e) {
+        return res.status(500).json({error: e.message})
     }
 })
 
-productRouter.put("/:productId", upload.single("photo"), async (req, res) => {
-    const {name, price, article, description, sectionId, subSection, promotion} = req.body;
-    const photo = req.file ? req.file.path : null;
-    const productId = req.params.productId;
+productRouter.put("/:id", async (req, res) => {
+        const {
+            name, photo, price, article, description, sectionId, subSectionId, promotion, quantity
+        } = req.body
 
-    try {
-        const product = await Product.findByPk(productId);
-
-        if (!product) {
-            return res.status(404).json({error: "Product not found"});
-        }
-
-        let changes = [];
-
-        if (name && name !== product.name) {
-            product.name = name;
-            changes.push("Name");
-        }
-        if (price && price !== product.price) {
-            product.price = price;
-            changes.push("Price");
-        }
-        if (article && article !== product.article) {
-            product.article = article;
-            changes.push("Article");
-        }
-        if (description && description !== product.description) {
-            product.description = description;
-            changes.push("Description");
-        }
-        if (sectionId && sectionId !== product.sectionId) {
-            product.sectionId = sectionId;
-            changes.push("Section");
-        }
-        if (subSection && subSection !== product.subSection) {
-            product.subSection = subSection;
-            changes.push("Subsection");
-        }
-        if (promotion !== undefined && promotion !== product.promotion) {
-            product.promotion = promotion;
-            changes.push("Promotion");
-        }
-        if (photo && photo !== product.photo) {
-            product.photo = photo;
-            changes.push("Photo");
-        }
-        if (changes.length > 0) {
-            const editHistoryEntry = {
-                changes: changes.join(", "),
-                editedAt: new Date()
-            };
-            if (!product.editHistory) {
-                product.editHistory = [];
+        try {
+            const product = await Product.findById(req.params.id)
+            if (!product) {
+                return res.status(404).json({error: "Product not found"})
             }
-            product.editHistory.push(editHistoryEntry);
+
+            const editHistory = []
+
+            const addToHistory = (column, oldValue, newValue) => {
+                if (oldValue !== newValue) {
+                    editHistory.push({column, oldValue, newValue})
+                }
+            }
+
+            addToHistory('name', product.name, name)
+            addToHistory('photo', product.photo, photo)
+            addToHistory('price', product.price, price)
+            addToHistory('article', product.article, article)
+            addToHistory('description', product.description, description)
+            addToHistory('sectionId', product.sectionId, sectionId)
+            addToHistory('subSectionId', product.subSectionId, subSectionId)
+            addToHistory('promotion', product.promotion, promotion)
+            addToHistory('quantity', product.quantity, quantity)
+
+            product.name = name || product.name
+            product.photo = photo || product.photo
+            product.price = price || product.price
+            product.article = article || product.article
+            product.description = description || product.description
+            product.sectionId = sectionId || product.sectionId
+            product.subSectionId = subSectionId || product.subSectionId
+            product.promotion = promotion || product.promotion
+            product.quantity = quantity || product.quantity
+
+
+            if (editHistory.length > 0) {
+                product.history = [...product.history, ...editHistory]
+            }
+
+
+            await product.save()
+
+            return res.status(200).json({message: "Product successfully updated", product})
+        } catch
+            (e) {
+            return res.status(500).json({error: e.message})
+        }
+    }
+)
+
+productRouter.delete("/", async (req, res) => {
+    await Product.deleteMany()
+    return res.status(201).json({message: "Deleted"})
+})
+productRouter.delete("/:id", async (req, res) => {
+    try {
+        const productId = req.params.id
+        if (!productId)
+            return res.status(404).json({error: "Product not found"})
+
+        const section = await Section.findOne({products: productId})
+        if (section) {
+            section.products.pop(productId)
+            await section.save()
         }
 
-        await product.save();
+        const subSection = await SubSection.findOne({products: productId})
+        if (subSection) {
+            subSection.products.pop(productId)
+            await subSection.save()
+        }
 
-        return res.status(200).json({message: "Product successfully updated", product});
+        await Product.deleteOne({_id: productId})
+        return res.status(201).json({message: "Deleted"})
     } catch (e) {
-        return res.status(500).json({error: e.message});
+        return res.status(500).json({error: e.message})
     }
-});
-
+})
 
 module.exports = productRouter
