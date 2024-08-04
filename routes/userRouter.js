@@ -48,9 +48,19 @@ userRouter.post("/register", registerValidator, async (req, res) => {
 
         await user.save()
 
+        const userObj = {
+            email: user.email,
+            fullname: user.fullname,
+            phone: user.phone,
+            city: user.city,
+            address: user.address,
+            history: user.history,
+            favorite: user.favorite
+        }
+
         return res.status(201).json({
             message: "Successfully created",
-            user: user,
+            user: userObj,
             accessToken: JWT
         })
     } catch (e) {

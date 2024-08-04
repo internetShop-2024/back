@@ -12,7 +12,7 @@ productRouter.get("/", async (req, res) => {
 
     try {
         const totalProducts = await Product.countDocuments()
-        const products = await Product.find()
+        const products = await Product.find({display: true})
             .skip((page - 1) * perPage)
             .limit(perPage)
             .lean()
@@ -110,7 +110,7 @@ productRouter.post("/:id/reviews", async (req, res) => {
 
 productRouter.put("/:id", async (req, res) => {
         const {
-            name, photo, price, article, description, sectionId, subSectionId, promotion, quantity
+            name, photo, price, article, description, sectionId, subSectionId, promotion, quantity, display
         } = req.body
 
         try {
@@ -136,6 +136,7 @@ productRouter.put("/:id", async (req, res) => {
             addToHistory('subSectionId', product.subSectionId, subSectionId)
             addToHistory('promotion', product.promotion, promotion)
             addToHistory('quantity', product.quantity, quantity)
+            // addToHistory('display', product.display, display)
 
             product.name = name || product.name
             product.photo = photo || product.photo
@@ -146,6 +147,7 @@ productRouter.put("/:id", async (req, res) => {
             product.subSectionId = subSectionId || product.subSectionId
             product.promotion = promotion || product.promotion
             product.quantity = quantity || product.quantity
+            product.display = display || product.display
 
 
             if (editHistory.length > 0) {

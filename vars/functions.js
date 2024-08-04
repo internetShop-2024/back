@@ -52,7 +52,7 @@ const tokenAssign = (data) => {
     if (data instanceof mongoose.Document) {
         data = data.toObject()
     }
-    const {password, refreshToken, exp,...payload} = data
+    const {password, refreshToken, exp, ...payload} = data
     const JWT = jwt.sign(payload, secretJWT, {expiresIn: '30s'})
     const RT = jwt.sign({_id: payload._id}, secretRT, {expiresIn: '1h'})
     return {JWT, RT}
@@ -74,7 +74,9 @@ const generateOrderNumber = () => {
 
 const orderProducts = async (order) => {
     return await Promise.all(order.localStorage.map(async item => {
-        const product = await Product.findById(item.goodsId)
+        let product = await Product.findById(item.goodsId)
+        if (!product)
+            product = "Product was deleted"
         return {product: product, quantity: item.quantity}
     }))
 }

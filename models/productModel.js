@@ -50,6 +50,10 @@ const productSchema = new mongoose.Schema({
             editedAt: {type: Date, default: Date.now()}
         }],
     },
+    display: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now()

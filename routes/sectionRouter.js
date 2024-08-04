@@ -56,10 +56,9 @@ sectionRouter.get("/:id", async (req, res) => {
                         }))
                     }
                 }))
-
                 section.subSections = subSections
-                return res.status(200).json({section: section})
             }
+            return res.status(200).json({section: section})
         } catch (e) {
             return res.status(500).json({error: e.message})
         }
