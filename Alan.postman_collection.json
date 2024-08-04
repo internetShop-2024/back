@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "3d5607b2-4b44-4489-a3a6-7cca136c934a",
+		"_postman_id": "84b4bfd3-fcd0-4240-b26f-5e61811a8ca4",
 		"name": "Alan",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20461823"
@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"photo\": \"Adasdas\",\r\n    \"name\": \"LKAjskdlas\",\r\n    \"price\": 3,\r\n    \"article\": \"Tea\",\r\n    \"description\": \"Moloko ahuenne\",\r\n    \"quantity\": 10,\r\n    \"subSectionId\": \"66a9fea40accc43f4db3b434\"\r\n}",
+							"raw": "{\r\n    \"photo\": \"Adasdas\",\r\n    \"name\": \"LKAjskdlas\",\r\n    \"price\": 3,\r\n    \"article\": \"Tea\",\r\n    \"description\": \"Moloko ahuenne\",\r\n    \"quantity\": 10,\r\n    \"sectionId\": \"66af3d3b76977c83311926b9\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -49,24 +49,18 @@
 							"path": [
 								"products",
 								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Product by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/products/66aa0779a16614d4ff9a2ada",
-							"host": [
-								"{{base_url}}"
 							],
-							"path": [
-								"products",
-								"66aa0779a16614d4ff9a2ada"
+							"query": [
+								{
+									"key": "id",
+									"value": "66af3fdc06c267446e5abf5d",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "112",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -79,7 +73,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"photo\": \"ASddasdas\",\r\n    \"name\": \"Olyvky\",\r\n    \"price\": 3,\r\n    \"article\": \"Huinya\",\r\n    \"description\": \"Olyvky ahuenni\",\r\n    \"quantity\": 10,\r\n    \"promotion\": false,\r\n    \"display\": false\r\n}",
+							"raw": "{\r\n    \"photo\": \"ASddasdas\",\r\n    \"name\": \"Olyvky\",\r\n    \"price\": 3,\r\n    \"article\": \"Huinya\",\r\n    \"description\": \"Olyvky ahuenni\",\r\n    \"quantity\": 10,\r\n    \"promotion\": false,\r\n    \"display\": true\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -87,77 +81,43 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/products/66aa0779a16614d4ff9a2ada",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"products",
-								"66aa0779a16614d4ff9a2ada"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Review",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"content\": \"ALKSDlkAHFJKadhfkjashkjshdkjshdfmnd,smfmn,sd\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/products/66a9ff1bf89e64e5ab33b1a6/reviews",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"products",
-								"66a9ff1bf89e64e5ab33b1a6",
-								"reviews"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete all Products",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/products/",
+							"raw": "{{base_url}}/products/?id=66af3fdc06c267446e5abf5d",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"products",
 								""
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "66af3fdc06c267446e5abf5d"
+								}
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Delete One Product",
+					"name": "Delete Products",
 					"request": {
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/products/6698b7539a7d512a76c1e9e9",
+							"raw": "{{base_url}}/products",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"products",
-								"6698b7539a7d512a76c1e9e9"
+								"products"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "66af3d9976977c83311926bc",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -540,7 +500,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjlN2Q5ZWRlMTFhYzdkMTkyODlhNzgiLCJlbWFpbCI6IjIyMTIxMkBnbWFpbC5jb20iLCJmdWxsbmFtZSI6ItCG0LLQsNC9INCG0LLQsNC90L7QstC40Ycg0IbQstCw0L3QtdC90LrQviIsInBob25lIjoiMDUwNzM1NjQzMiIsImhpc3RvcnkiOlsiNjZhOWU3OGM2MTRjODFkOTk5ZGRjNjIxIl0sImZhdm9yaXRlIjpbXSwiY3JlYXRlZEF0IjoiMjAyNC0wNy0yMlQxNTo0MToxMy40MTdaIiwiX192IjoxLCJhZGRyZXNzIjoiMyIsImNpdHkiOiJTYXMiLCJpYXQiOjE3MjI0MTc4MTQsImV4cCI6MTcyMjQxNzg0NH0.AqKRj-Z6RjtbBezwNaMQsmWZ9Zc_UKX36xLOpd_-fmI",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjllN2Q5ZWRlMTFhYzdkMTkyODlhNzgiLCJlbWFpbCI6IjIyMTIxMkBnbWFpbC5jb20iLCJmdWxsbmFtZSI6ItCG0LLQsNC9INCG0LLQsNC90L7QstC40Ycg0IbQstCw0L3QtdC90LrQviIsInBob25lIjoiMDUwNzM1NjQzMiIsImhpc3RvcnkiOlsiNjZhOWU3OGM2MTRjODFkOTk5ZGRjNjIxIiwiNjZhYTA0MTY3ZmYwZjYxYzY2YTA5YWY5IiwiNjZhYTA1NzcxOGVkODgyZDRjMGIxMTUxIiwiNjZhZjI4MTNiMzgzNmNiMjlkNTQ1ODFiIiwiNjZhZjI4ODNiMzgzNmNiMjlkNTQ1ODJhIl0sImZhdm9yaXRlIjpbXSwiY3JlYXRlZEF0IjoiMjAyNC0wNy0yMlQxNTo0MToxMy40MTdaIiwiX192IjozLCJhZGRyZXNzIjoiODQiLCJjaXR5IjoiTHZpdiIsImlhdCI6MTcyMjc1NTgzNSwiZXhwIjoxNzIyNzU1ODY1fQ.kj-WWkVEDfAHpbE8qyfUgX7fDREUu_e73NPRlLs_X5A",
 									"type": "string"
 								}
 							]
@@ -637,7 +597,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"localStorage\": [{\r\n        \"goodsId\": \"66aa056018ed882d4c0b114d\",\r\n        \"quantity\": 2\r\n    }],\r\n    \"cost\": 400,\r\n    \"fullname\": \"Іван Іванович Іван\",\r\n    \"phone\": \"0507356432\",\r\n    \"deliveryType\": \"NP\",\r\n    \"city\": \"Kalush\",\r\n    \"address\": \"3\",\r\n    \"paymentType\": \"transfer\",\r\n    \"agreement\": true\r\n}",
+							"raw": "{\r\n    \"localStorage\": [{\r\n        \"goodsId\": \"66aa056018ed882d4c0b114d\",\r\n        \"quantity\": 2\r\n    }],\r\n    \"cost\": 400,\r\n    \"fullname\": \"Іван Іванович Іван\",\r\n    \"phone\": \"0507356432\",\r\n    \"deliveryType\": \"NP\",\r\n    \"city\": \"Asdasd\",\r\n    \"address\": \"3\",\r\n    \"paymentType\": \"transfer\",\r\n    \"agreement\": true\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -804,6 +764,184 @@
 								"posts",
 								"post",
 								"66aa06bf87fca55e7eb1c6d8"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/?id=669e7d9ede11ac7d19289a78&orderId=66af366dcdc1a0aee34ab367",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								""
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "669e7d9ede11ac7d19289a78"
+								},
+								{
+									"key": "orderId",
+									"value": "66af366dcdc1a0aee34ab367"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"Adasd\",\n    \"password\": \"asdasdasd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create ADMIN",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"Adasd\",\n    \"password\": \"asdasdasd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"create"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reviews",
+			"item": [
+				{
+					"name": "Create Review",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjllN2Q5ZWRlMTFhYzdkMTkyODlhNzgiLCJlbWFpbCI6IjIyMTIxMkBnbWFpbC5jb20iLCJmdWxsbmFtZSI6ItCG0LLQsNC9INCG0LLQsNC90L7QstC40Ycg0IbQstCw0L3QtdC90LrQviIsInBob25lIjoiMDUwNzM1NjQzMiIsImhpc3RvcnkiOlsiNjZhOWU3OGM2MTRjODFkOTk5ZGRjNjIxIiwiNjZhYTA0MTY3ZmYwZjYxYzY2YTA5YWY5IiwiNjZhYTA1NzcxOGVkODgyZDRjMGIxMTUxIiwiNjZhZjI4MTNiMzgzNmNiMjlkNTQ1ODFiIiwiNjZhZjI4ODNiMzgzNmNiMjlkNTQ1ODJhIl0sImZhdm9yaXRlIjpbXSwiY3JlYXRlZEF0IjoiMjAyNC0wNy0yMlQxNTo0MToxMy40MTdaIiwiX192IjozLCJhZGRyZXNzIjoiODQiLCJjaXR5IjoiTHZpdiIsImlhdCI6MTcyMjc1NTgzNSwiZXhwIjoxNzIyNzU1ODY1fQ.kj-WWkVEDfAHpbE8qyfUgX7fDREUu_e73NPRlLs_X5A",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"text\": \"ALKSDlkAHFJKadhfkjashkjshdkjshdfmnd,smfmn,sd\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/reviews?id=66af43262cf9116b46b70ce9",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reviews"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "66af43262cf9116b46b70ce9"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Review",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjllN2Q5ZWRlMTFhYzdkMTkyODlhNzgiLCJlbWFpbCI6IjIyMTIxMkBnbWFpbC5jb20iLCJmdWxsbmFtZSI6ItCG0LLQsNC9INCG0LLQsNC90L7QstC40Ycg0IbQstCw0L3QtdC90LrQviIsInBob25lIjoiMDUwNzM1NjQzMiIsImhpc3RvcnkiOlsiNjZhOWU3OGM2MTRjODFkOTk5ZGRjNjIxIiwiNjZhYTA0MTY3ZmYwZjYxYzY2YTA5YWY5IiwiNjZhYTA1NzcxOGVkODgyZDRjMGIxMTUxIiwiNjZhZjI4MTNiMzgzNmNiMjlkNTQ1ODFiIiwiNjZhZjI4ODNiMzgzNmNiMjlkNTQ1ODJhIl0sImZhdm9yaXRlIjpbXSwiY3JlYXRlZEF0IjoiMjAyNC0wNy0yMlQxNTo0MToxMy40MTdaIiwiX192IjozLCJhZGRyZXNzIjoiODQiLCJjaXR5IjoiTHZpdiIsImlhdCI6MTcyMjc1NTgzNSwiZXhwIjoxNzIyNzU1ODY1fQ.kj-WWkVEDfAHpbE8qyfUgX7fDREUu_e73NPRlLs_X5A",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"text\": \"ALKSDlkAHFJKadhfkjashkjshdkjshdfmnd,smfmn,sd\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/reviews",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reviews"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "66af43262cf9116b46b70ce9",
+									"disabled": true
+								}
 							]
 						}
 					},

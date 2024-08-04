@@ -2,7 +2,7 @@ const {validateToken, tokenAssign} = require("../vars/functions")
 const User = require("../models/userModel")
 
 const authValidator = async (req, res, next) => {
-    const token = req.header('Authorization').replace('Bearer ', '')
+    const token = req.header('Authorization')?.replace('Bearer ', '')
     if (!token) {
         return res.status(401).json({error: 'Unauthorized'})
     }
@@ -14,9 +14,9 @@ const authValidator = async (req, res, next) => {
     }
 
     try {
-        let user = await validateToken(token, true)
+        let user = await validateToken(token, "JWT")
         if (!user) {
-            const decoded = await validateToken(refreshToken, false)
+            const decoded = await validateToken(refreshToken, "RT")
 
             user = await User.findById(decoded._id)
 

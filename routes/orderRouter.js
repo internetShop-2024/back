@@ -69,12 +69,10 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
 
         await order.save()
 
-        const user = await User.findOne({phone: phone})
-
-        if (user) {
-            user.history.push(order._id)
-            await user.save()
-        }
+        await User.updateOne(
+            {phone: phone},
+            {$push: {history: order._id}}
+        )
 
         return res.status(201).json({
             message: "Order Successfully created",

@@ -4,5 +4,6 @@ const port = process.env.PORT
 const mongoUri = process.env.MONGO_URI
 const secretJWT = process.env.SECRET_JWT
 const secretRT = process.env.SECRET_RT
+const secretAT = process.env.SECRET_AT
 
-module.exports = {port, mongoUri, secretJWT, secretRT}
+module.exports = {port, mongoUri, secretJWT, secretRT, secretAT}

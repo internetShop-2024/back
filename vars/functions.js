@@ -2,9 +2,8 @@ const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
 const mongoose = require("mongoose")
 
-const {secretJWT, secretRT} = require("./privateVars")
+const {secretJWT, secretRT, secretAT} = require("./privateVars")
 const Review = require("../models/reviewModel");
-// const User = require("../models/userModel")
 const Product = require("../models/productModel")
 
 
@@ -58,10 +57,29 @@ const tokenAssign = (data) => {
     return {JWT, RT}
 }
 
+const adminTokenAssign = (data) => {
+    if (data instanceof mongoose.Document) {
+        data = data.toObject()
+    }
+    const {password, createdAt, _id,...payload} = data
+    return jwt.sign(payload, secretAT, {expiresIn: "24h"})
+}
+
 const validateToken = async (token, secret) => {
     try {
-        const secretKey = secret ? secretJWT : secretRT
-        return await jwt.verify(token, secretKey)
+        const SecretEnum = {
+            JWT: 'JWT', RT: 'RT', AT: 'AT',
+        }
+        switch (secret) {
+            case SecretEnum.JWT:
+                return await jwt.verify(token, secretJWT)
+            case SecretEnum.RT:
+                return await jwt.verify(token, secretRT)
+            case SecretEnum.AT:
+                return await jwt.verify(token, secretAT)
+            default:
+                return new Error('Invalid secret type')
+        }
     } catch (e) {
         return null
     }
@@ -75,8 +93,7 @@ const generateOrderNumber = () => {
 const orderProducts = async (order) => {
     return await Promise.all(order.localStorage.map(async item => {
         let product = await Product.findById(item.goodsId)
-        if (!product)
-            product = "Product was deleted"
+        if (!product) product = "Product was deleted"
         return {product: product, quantity: item.quantity}
     }))
 }
@@ -85,16 +102,9 @@ module.exports = {
     //PRODUCTS
     productReviews,
     //USERS
-    passwordHash,
-    passwordCompare,
-    validateEmail,
-    validatePassword,
-    validateFullname,
-    validatePhone,
+    passwordHash, passwordCompare, validateEmail, validatePassword, validateFullname, validatePhone,
     //TOKEN
-    tokenAssign,
-    validateToken,
+    tokenAssign, validateToken, adminTokenAssign,
     //ORDERS
-    generateOrderNumber,
-    orderProducts
+    generateOrderNumber, orderProducts
 }
