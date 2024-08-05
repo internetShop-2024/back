@@ -144,25 +144,36 @@ sectionRouter.post("/:id/subsection", async (req, res) => {
     }
 })
 
-sectionRouter.post("/:id/promotion", async (req, res) => {
-    const {promotion} = req.body
-    let subSection
-    let section
+//PUT
+sectionRouter.put("/promotion", async (req, res) => {
+    const {discount, isActive} = req.body
+    const {id} = req.query
     try {
-        const id = req.params.id
-        const section = await Section.findById(id).lean()
-        if (!section) {
+        if (!id)
             return res.status(404).json({error: "Section not found"})
-        }
 
-        const productIds = section.products.map(productId => productId)
+        const section = await Section.findById(id).select('products').lean()
 
-        const updatedProducts = await Product.updateMany(
-            {_id: {$in: productIds}},
-            {$set: {promotion: promotion}}
-        )
+        const products = await Product.find({_id: {$in: section.products}}).select('price promotion').lean()
 
-        return res.status(200).json({message: "Products successfully updated", updatedProducts})
+        const bulkOperations = products.map(product => {
+            const newPrice = discount ? product.price * discount : product.promotion.newPrice
+            return {
+                updateOne: {
+                    filter: {_id: product._id},
+                    update: {
+                        $set: {
+                            'promotion.isActive': isActive,
+                            ...(discount && {'promotion.newPrice': newPrice})
+                        }
+                    }
+                }
+            }
+        })
+
+        await Product.bulkWrite(bulkOperations)
+
+        return res.status(200).json({message: "Products updated successfully"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

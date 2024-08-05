@@ -26,30 +26,22 @@ const productSchema = new mongoose.Schema({
         ref: "Review"
     },
     promotion: {
-        type: Boolean,
-        default: false
+        isActive: {
+            type: Boolean,
+            default: false
+        },
+        newPrice: Number,
     },
-    // promotion: {
-    //     type: {
-    //         isActive: {
-    //             type: Boolean,
-    //             default: false
-    //         },
-    //         newPrice: Number,
-    //     }
-    // },
     quantity: {
         type: Number,
         default: 0
     },
-    history: {
-        type: [{
-            column: String,
-            oldValue: mongoose.Schema.Types.Mixed,
-            newValue: mongoose.Schema.Types.Mixed,
-            editedAt: {type: Date, default: Date.now()}
-        }],
-    },
+    history: [{
+        column: String,
+        oldValue: mongoose.Schema.Types.Mixed,
+        newValue: mongoose.Schema.Types.Mixed,
+        editedAt: Date
+    }],
     display: {
         type: Boolean,
         default: true
@@ -59,6 +51,8 @@ const productSchema = new mongoose.Schema({
         default: Date.now()
     }
 })
+
+productSchema.path("history").schema.set('_id', false)
 
 const Product = mongoose.model("Product", productSchema)
 

@@ -16,14 +16,22 @@ const productUpdateValidator = async (req, res, next) => {
 
         fieldsToUpdate.forEach(field => {
             if (req.body[field] !== undefined && req.body[field] !== product[field]) {
-                editHistory.push({column: field, oldValue: product[field], newValue: req.body[field]})
+                editHistory.push({
+                    column: field,
+                    oldValue: product[field],
+                    newValue: req.body[field],
+                    editedAt: Date.now()
+                })
                 product[field] = req.body[field]
             }
         })
 
 
         if (editHistory.length > 0) {
-            product.history = [...product.history, ...editHistory]
+            await Product.updateOne(
+                {_id: id},
+                {$push: {history: {$each: editHistory}}}
+            )
         }
 
         await product.save()

@@ -6,6 +6,7 @@ const {passwordHash, tokenAssign} = require("../vars/functions");
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
 const authorizationValidator = require("../validators/authorizationValidator")
+const Product = require("../models/productModel");
 
 userRouter.get("/profile", authValidator, async (req, res) => {
     try {
@@ -28,6 +29,19 @@ userRouter.get('/history', authValidator, async (req, res) => {
         return res.status(500).json({error: e.message})
     }
 })
+
+userRouter.get("/favorite", authValidator, async (req, res) => {
+    try {
+        const user = req.user
+
+        user.favorite = await Product.find({_id: {$in: user.favorite}})
+        return res.status(200).json({favorite: user.favorite})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+//POST
 userRouter.post("/register", registerValidator, async (req, res) => {
     const {email, password, fullname, phone} = req.body
     try {
@@ -103,6 +117,23 @@ userRouter.post("/authorization", authorizationValidator, async (req, res) => {
     }
 })
 
+userRouter.post("/favorite", authValidator, async (req, res) => {
+    const {goods} = req.body
+    try {
+        if (goods.length > 0) {
+            await User.updateOne(
+                {_id: req.user._id},
+                {$push: {favorite: {$each: goods}}}
+            )
+            return res.status(201).json({message: "Successfully added"})
+        } else {
+            return res.status(404).json({error: "Goods not found"})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
 //PUT
 userRouter.put('/profile', authValidator, async (req, res) => {
     const {phone, city, address} = req.body
@@ -125,6 +156,24 @@ userRouter.put('/profile', authValidator, async (req, res) => {
             user: updatedUser,
             accessToken: JWT
         })
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+//DELETE
+userRouter.delete("/favorite", authValidator, async (req, res) => {
+    const {id} = req.query
+    try {
+        let ids = id
+        if (typeof id === 'string') {
+            ids = [id]
+        }
+        await User.updateOne(
+            {_id: req.user._id},
+            {$pull: {favorite: {$in: ids}}}
+        )
+        return res.status(201).json({message: "Deleted from favorite"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
