@@ -3,10 +3,12 @@ const adminRouter = require("express").Router()
 const Admin = require("../models/adminModel")
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
+const Review = require("../models/reviewModel")
 
 const adminValidator = require("../validators/adminValidator")
 const {passwordHash, adminTokenAssign, passwordCompare} = require("../vars/functions");
 
+//GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
     try {
         const {id, orderId} = req.query
@@ -29,6 +31,25 @@ adminRouter.get("/users", adminValidator, async (req, res) => {
     }
 })
 
+adminRouter.get("/reviews", adminValidator, async (req, res) => {
+    const id = req.query.id
+    try {
+        if (!id) {
+            const reviews = await Review.find().lean()
+            return res.status(200).json({reviews: reviews})
+        } else {
+            const review = await Review.findById(id).lean()
+            if (!review)
+                return res.status(404).json({error: "Review not found"})
+
+            return res.status(201).json({review: review})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+//POST
 adminRouter.post("/create", async (req, res) => {
     const {username, password} = req.body
     try {
@@ -80,6 +101,40 @@ adminRouter.post("/login", async (req, res) => {
             secure: true
         })
         return res.status(201).json({message: "Successfully"})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+//PUT
+adminRouter.put("/review", adminValidator, async (req, res) => {
+    const id = req.query.id
+    const {replyText} = req.body
+    try {
+        if (!id) {
+            return res.status(404).json({error: "Review not found"})
+        } else if (!replyText) {
+            return res.status(400).json({error: "Fill the inputs"})
+        } else {
+            const updated = await Review.updateOne(
+                {_id: id},
+                {
+                    $set: {
+                        'content.reply': {
+                            replySenderId: req.adminId,
+                            replyText: replyText,
+                            repliedAt: Date.now()
+
+                        }
+                    }
+                }
+            )
+
+            if (updated.modifiedCount <= 1)
+                return res.status(400).json({error: "Not Replied"})
+
+            return res.status(201).json({message: "Answered"})
+        }
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

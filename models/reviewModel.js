@@ -17,13 +17,12 @@ const reviewSchema = new mongoose.Schema({
             required: true,
         },
         reply: {
-            type: {
-                replySenderId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Admin",
-                },
-                replyText: String
-            }
+            replySenderId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Admin",
+            },
+            replyText: String,
+            repliedAt: Date
         }
     },
     createdAt: {

@@ -61,7 +61,7 @@ const adminTokenAssign = (data) => {
     if (data instanceof mongoose.Document) {
         data = data.toObject()
     }
-    const {password, createdAt, _id,...payload} = data
+    const {password, createdAt, ...payload} = data
     return jwt.sign(payload, secretAT, {expiresIn: "24h"})
 }
 

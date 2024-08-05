@@ -85,15 +85,19 @@ productRouter.put("/", adminValidator, productUpdateValidator, async (req, res) 
 productRouter.delete("/", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
+        let ids = id
+        if (typeof id === 'string') {
+            ids = [id]
+        }
         if (!id) {
             await Product.deleteMany()
             await Section.updateMany({}, {$pull: {products: {$in: []}}})
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
             return res.status(201).json({message: "All products deleted"})
         } else {
-            await Section.updateOne({products: id}, {$pull: {products: id}})
-            await SubSection.updateOne({products: id}, {$pull: {products: id}})
-            await Product.deleteOne({_id: id})
+            await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
+            await SubSection.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
+            await Product.deleteMany({_id: id})
             return res.status(201).json({message: "Product deleted"})
         }
     } catch (e) {

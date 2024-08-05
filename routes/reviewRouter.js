@@ -21,7 +21,7 @@ reviewRouter.post("/", authValidator, async (req, res) => {
             {$push: {reviews: review._id}}
         )
 
-        if (!updated)
+        if (updated.modifiedCount === 0)
             return res.status(400).json({error: "Review not created"})
 
         await review.save()
@@ -32,6 +32,7 @@ reviewRouter.post("/", authValidator, async (req, res) => {
         return res.status(500).json({error: e.message})
     }
 })
+
 
 reviewRouter.delete("/", adminValidator, async (req, res) => {
     const {id} = req.query
