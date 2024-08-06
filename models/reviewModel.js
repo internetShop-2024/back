@@ -4,7 +4,6 @@ const reviewSchema = new mongoose.Schema({
     reviewSenderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        unique: true
     },
     product: {
         type: mongoose.Schema.Types.ObjectId,

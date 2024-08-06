@@ -2,11 +2,12 @@ const userRouter = require("express").Router()
 
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
+const Product = require("../models/productModel")
+
 const {passwordHash, tokenAssign} = require("../vars/functions");
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
 const authorizationValidator = require("../validators/authorizationValidator")
-const Product = require("../models/productModel");
 
 userRouter.get("/profile", authValidator, async (req, res) => {
     try {
@@ -20,7 +21,7 @@ userRouter.get("/profile", authValidator, async (req, res) => {
 userRouter.get('/history', authValidator, async (req, res) => {
     const user = req.user
     try {
-        const orders = await Order.find({phone: user.phone})
+        const orders = await Order.find({phone: user.phone}).lean()
         if (!orders.length)
             return res.status(404).json({error: "No orders found for this user"})
 
@@ -34,7 +35,7 @@ userRouter.get("/favorite", authValidator, async (req, res) => {
     try {
         const user = req.user
 
-        user.favorite = await Product.find({_id: {$in: user.favorite}})
+        user.favorite = await Product.find({_id: {$in: user.favorite}}).lean()
         return res.status(200).json({favorite: user.favorite})
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -48,11 +49,18 @@ userRouter.post("/register", registerValidator, async (req, res) => {
         if (!email || !password || !fullname || !phone)
             return res.status(400).json({error: "Fill all inputs"})
 
+        if (await User.findOne({phone: phone}))
+            return res.status(400).json({error: "Phone number already in use"})
+
+        const orders = await Order.find({phone: phone}).select("_id").lean()
+        const ordersIds = orders.map(order => order._id)
+
         const user = new User({
             email: email,
             password: await passwordHash(password),
             fullname: fullname,
-            phone: phone
+            phone: phone,
+            history: ordersIds
         })
 
         const {JWT, RT} = tokenAssign(user)

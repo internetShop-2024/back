@@ -2,29 +2,25 @@ const orderRouter = require('express').Router()
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const orderValidator = require("../validators/orderValidator")
-const {generateOrderNumber, orderProducts} = require("../vars/functions")
+const {generateOrderNumber, orderProducts, convertToArray} = require("../vars/functions")
+const adminValidator = require("../validators/adminValidator");
 
 //GET
-orderRouter.get('/order/:id', async (req, res) => {
+orderRouter.get('/', adminValidator, async (req, res) => {
+    const {id} = req.query
     try {
-        const order = await Order.findById(req.params.id)
-        if (!order)
-            return res.status(404).json({error: 'Order not found'})
+        if (!id) {
+            const orders = await Order.find()
+            return res.status(200).json({orders: orders})
+        } else {
+            const order = await Order.findById(id).lean()
+            if (!order)
+                return res.status(404).json({error: 'Order not found'})
 
-        const orderWithProducts = await orderProducts(order)
-        let orderObj = order.toObject()
-        orderObj.localStorage = orderWithProducts
+            order.localStorage = await orderProducts(order)
 
-        return res.status(200).json({order: orderObj})
-    } catch (e) {
-        return res.status(500).json({error: e.message})
-    }
-})
-
-orderRouter.get('/', async (req, res) => {
-    try {
-        const orders = await Order.find()
-        return res.status(200).json(orders)
+            return res.status(200).json({order: order})
+        }
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -84,5 +80,22 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
     }
 })
 
+orderRouter.delete("/", adminValidator, async (req, res) => {
+    const {id} = req.body
+    try {
+        if (!id) {
+            await Order.deleteMany()
+            await User.updateMany({}, {$pull: {history: {$in: []}}})
+            return res.status(201).json({message: "All orders deleted"})
+        } else {
+            const ids = await convertToArray(id)
+            await Order.deleteMany({_id: {$in: ids}})
+            await User.updateMany({}, {$pull: {history: {$in: ids}}})
+            return res.status(201).json({message: "Order deleted"})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
 
 module.exports = orderRouter

@@ -6,6 +6,7 @@ const Product = require("../models/productModel")
 const authValidator = require("../validators/authValidator");
 const adminValidator = require("../validators/adminValidator");
 
+//POST
 reviewRouter.post("/", authValidator, async (req, res) => {
     const {text} = req.body
     const {id} = req.query
@@ -33,7 +34,7 @@ reviewRouter.post("/", authValidator, async (req, res) => {
     }
 })
 
-
+//DELETE
 reviewRouter.delete("/", adminValidator, async (req, res) => {
     const {id} = req.query
     try {

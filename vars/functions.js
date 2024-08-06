@@ -5,7 +5,15 @@ const mongoose = require("mongoose")
 const {secretJWT, secretRT, secretAT} = require("./privateVars")
 const Review = require("../models/reviewModel");
 const Product = require("../models/productModel")
+const SubSection = require("../models/subSectionModel");
 
+const convertToArray = async (id) => {
+    let ids = id
+    if (typeof id === 'string') {
+        ids = [id]
+    }
+    return ids
+}
 
 //PRODUCTS
 const productReviews = async (products) => {
@@ -93,12 +101,33 @@ const generateOrderNumber = () => {
 const orderProducts = async (order) => {
     return await Promise.all(order.localStorage.map(async item => {
         let product = await Product.findById(item.goodsId)
-        if (!product) product = "Product was deleted"
+        if (!product) product = "The product has been removed"
         return {product: product, quantity: item.quantity}
     }))
 }
 
+//SECTIONS
+const sectionProducts = async (section) => {
+    const products = await Product.find({_id: {$in: section.products}}).lean()
+    section.products = await productReviews(products)
+    return section
+}
+
+const sectionSubSections = async (section) => {
+    const subSections = await SubSection.find({_id: {$in: section.subSections}}).lean()
+
+    await Promise.all(subSections.map(async subSection => {
+        if (subSection.products.length > 0) {
+            const products = await Product.find({_id: {$in: subSection.products}}).lean()
+            subSection.products = await productReviews(products)
+        }
+    }))
+    section.subSections = subSections
+    return section
+}
+
 module.exports = {
+    convertToArray,
     //PRODUCTS
     productReviews,
     //USERS
@@ -106,5 +135,7 @@ module.exports = {
     //TOKEN
     tokenAssign, validateToken, adminTokenAssign,
     //ORDERS
-    generateOrderNumber, orderProducts
+    generateOrderNumber, orderProducts,
+    //SECTIONS
+    sectionProducts, sectionSubSections
 }

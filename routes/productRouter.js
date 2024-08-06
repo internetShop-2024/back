@@ -1,13 +1,13 @@
 const productRouter = require("express").Router()
 
 const Product = require("../models/productModel")
-const Review = require("../models/reviewModel")
 const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
-const {productReviews} = require("../vars/functions")
+
+const {productReviews, convertToArray} = require("../vars/functions")
+
 const productUpdateValidator = require("../validators/productUpdateValidator")
 const adminValidator = require("../validators/adminValidator")
-const authValidator = require("../validators/authValidator")
 
 //GET
 productRouter.get("/", adminValidator, async (req, res) => {
@@ -85,10 +85,7 @@ productRouter.put("/", adminValidator, productUpdateValidator, async (req, res) 
 productRouter.delete("/", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
-        let ids = id
-        if (typeof id === 'string') {
-            ids = [id]
-        }
+        const ids = await convertToArray(id)
         if (!id) {
             await Product.deleteMany()
             await Section.updateMany({}, {$pull: {products: {$in: []}}})

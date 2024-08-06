@@ -6,7 +6,7 @@ const Order = require("../models/orderModel")
 const Review = require("../models/reviewModel")
 
 const adminValidator = require("../validators/adminValidator")
-const {passwordHash, adminTokenAssign, passwordCompare} = require("../vars/functions");
+const {passwordHash, adminTokenAssign, passwordCompare, convertToArray} = require("../vars/functions")
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -14,8 +14,10 @@ adminRouter.get("/users", adminValidator, async (req, res) => {
         const {id, orderId} = req.query
         if (id && !orderId) {
             const user = await User.findById(id).select('_id createdAt fullName phone email city history')
+
             if (!user)
                 return res.status(404).json({error: "User not found"})
+
             return res.status(200).json({user: user})
         } else if (id && orderId) {
             const phone = await User.findById(id).select('phone').lean()
@@ -130,10 +132,27 @@ adminRouter.put("/review", adminValidator, async (req, res) => {
                 }
             )
 
-            if (updated.modifiedCount <= 1)
+            if (updated.modifiedCount < 1)
                 return res.status(400).json({error: "Not Replied"})
 
             return res.status(201).json({message: "Answered"})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+//DELETE
+adminRouter.delete("/users", adminValidator, async (req, res) => {
+    const {id} = req.query
+    try {
+        if (!id) {
+            await User.deleteMany()
+            return res.status(201).json({message: "Deleted"})
+        } else {
+            const ids = await convertToArray(id)
+            await User.deleteMany({_id: {$in: ids}})
+            return res.status(201).json({message: "Deleted"})
         }
     } catch (e) {
         return res.status(500).json({error: e.message})
