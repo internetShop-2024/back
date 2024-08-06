@@ -2,7 +2,7 @@ const orderRouter = require('express').Router()
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const orderValidator = require("../validators/orderValidator")
-const {generateOrderNumber, orderProducts, convertToArray} = require("../vars/functions")
+const {generateOrderNumber, orderProducts, convertToArray, filterSystem} = require("../vars/functions")
 const adminValidator = require("../validators/adminValidator");
 
 //GET
@@ -10,14 +10,18 @@ orderRouter.get('/', adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const orders = await Order.find()
+            const data = await filterSystem(req.query)
+            const orders = await Order.find(data.payload).sort(data.sortOptions).lean()
+            if (!orders.length)
+                return res.status(404).json({message: "Not Found"})
+
             return res.status(200).json({orders: orders})
         } else {
             const order = await Order.findById(id).lean()
             if (!order)
                 return res.status(404).json({error: 'Order not found'})
 
-            order.localStorage = await orderProducts(order)
+           await orderProducts(order)
 
             return res.status(200).json({order: order})
         }

@@ -1,31 +1,28 @@
 const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
+const adminValidator = require("../validators/adminValidator");
+const {convertToArray} = require("../vars/functions");
 //GET
-blogRouter.get('/', async (req, res) => {
+blogRouter.get('/', adminValidator, async (req, res) => {
+    const {id} = req.query
     try {
-        const posts = await Blog.find({display: true})
-        return res.status(200).json(posts)
-    } catch (e) {
-        return res.status(500).json({error: e.message})
-    }
-})
-
-blogRouter.get('/post/:id', async (req, res) => {
-    const {id} = req.params
-
-    try {
-        const post = await Blog.findById(id)
-        if (!post) {
-            return res.status(404).json({error: 'Post not found'})
+        if (!id) {
+            const posts = await Blog.find({display: true})
+            return res.status(200).json({posts: posts})
+        } else {
+            const post = await Blog.findById(id)
+            if (!post) {
+                return res.status(404).json({error: 'Post not found'})
+            }
+            return res.status(200).json({post: post})
         }
-        return res.status(200).json(post)
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
 //POST
-blogRouter.post('/post', async (req, res) => {
+blogRouter.post('/', adminValidator, async (req, res) => {
     const {title, text, image, sections, subSections} = req.body
 
     try {
@@ -44,10 +41,9 @@ blogRouter.post('/post', async (req, res) => {
 })
 
 //PUT
-blogRouter.put('/post/:id', async (req, res) => {
-    const {id} = req.params
+blogRouter.put('/', async (req, res) => {
+    const {id} = req.query
     const {title, text, image, sections, display} = req.body
-
     try {
         const updatedPost = await Blog.findByIdAndUpdate(
             id,
@@ -64,15 +60,17 @@ blogRouter.put('/post/:id', async (req, res) => {
 })
 
 //DELETE
-blogRouter.delete('/post/:id', async (req, res) => {
-    const {id} = req.params
-
+blogRouter.delete('/', async (req, res) => {
+    const {id} = req.query
     try {
-        const deletedPost = await Blog.findByIdAndDelete(id)
-        if (!deletedPost) {
-            return res.status(404).json({error: 'Post not found'})
+        if (!id) {
+            await Blog.deleteMany()
+            return res.status(201).json({message: 'Post deleted successfully'})
+        } else {
+            const ids = await convertToArray(id)
+            await Blog.deleteMany({_id: {$in: ids}})
+            return res.status(201).json({message: 'Post deleted successfully'})
         }
-        return res.status(200).json({message: 'Post deleted successfully'})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

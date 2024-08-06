@@ -6,13 +6,102 @@ const {secretJWT, secretRT, secretAT} = require("./privateVars")
 const Review = require("../models/reviewModel");
 const Product = require("../models/productModel")
 const SubSection = require("../models/subSectionModel");
+const User = require("../models/userModel");
+const {Parser} = require("json2csv");
+const Order = require("../models/orderModel");
 
-const convertToArray = async (id) => {
-    let ids = id
-    if (typeof id === 'string') {
-        ids = [id]
+//ADMIN
+const convertToArray = async (data) => {
+    return data.split(',')
+}
+
+const filterSystem = async (data) => {
+    let payload = {}
+    let sortOptions = {}
+    for (const item of Object.keys(data)) {
+        if (['orderBy', 'page', 'sortBy'].includes(item)) continue
+
+        if (['createdAt'].includes(item)) {
+            const items = await convertToArray(data[item])
+            payload[item] = {}
+            if (items.length > 1) {
+                const from = new Date(items[0])
+                const to = new Date(items[1])
+                to.setDate(to.getDate() + 1)
+
+                payload.createdAt.$gte = from
+                payload.createdAt.$lt = to
+            } else {
+                const date = new Date(data.createdAt)
+                const nextDay = new Date(date)
+                nextDay.setDate(date.getDate() + 1)
+
+                payload.createdAt.$gte = date
+                payload.createdAt.$lt = nextDay
+            }
+        } else if (['article', 'price', 'quantity'].includes(item)) {
+            const items = await convertToArray(data[item])
+            if (items.length > 1) {
+                payload[item] = {
+                    $gte: parseFloat(items[0]),
+                    $lte: parseFloat(items[1])
+                }
+            } else {
+                payload[item] = parseFloat(data[item])
+            }
+        } else if (['display', 'payment'].includes(item)) {
+            payload[item] = data[item] === '1' ? true : data[item] === '0' ? false : data[item]
+        } else if (['name', 'fullname', 'customerComment', "managerComment"].includes(item)) {
+            payload[item] = {$regex: data[item], $options: 'i'}
+        } else {
+            const items = await convertToArray(data[item])
+            if (items.length > 1) {
+                payload[item] = {
+                    $gte: items[0],
+                    $lte: items[1]
+                }
+            } else {
+                payload[item] = data[item]
+            }
+        }
     }
-    return ids
+    if (data.orderBy && data.sortBy) {
+        const orderData = await convertToArray(data.orderBy)
+        const sortData = await convertToArray(data.sortBy)
+        if (sortData.length !== orderData.length) {
+            throw new Error("Sort fields and orders mismatch")
+        }
+        sortData.forEach((field, index) => {
+            sortOptions[field] = parseInt(orderData[index]) || 1
+        })
+    }
+    return {payload: payload, sortOptions: sortOptions}
+}
+
+const export2csvSystem = async (id, collection) => {
+    let data
+    let config = {}
+    const parser = new Parser()
+    if (id && id.length) {
+        id = await convertToArray(id)
+        config._id = {$in: id}
+    }
+    switch (collection) {
+        case 'products':
+            data = await Product.find(config).select("-__v").lean()
+            await productReviews(data)
+            break
+        case 'orders':
+            data = await Order.find(config).select("-__v").lean()
+            break
+        case 'users':
+            data = await User.find(config).select("-__v -password -refreshToken").lean()
+            break
+        default:
+            throw new Error("Can't find anything")
+    }
+    if (!data.length) throw new Error("Pls select objects correctly ")
+    return parser.parse(data)
 }
 
 //PRODUCTS
@@ -127,7 +216,8 @@ const sectionSubSections = async (section) => {
 }
 
 module.exports = {
-    convertToArray,
+    //ADMINS
+    convertToArray, filterSystem, export2csvSystem,
     //PRODUCTS
     productReviews,
     //USERS

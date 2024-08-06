@@ -4,7 +4,7 @@ const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Product = require("../models/productModel")
 
-const {passwordHash, tokenAssign} = require("../vars/functions");
+const {passwordHash, tokenAssign, convertToArray} = require("../vars/functions");
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
 const authorizationValidator = require("../validators/authorizationValidator")
@@ -173,10 +173,7 @@ userRouter.put('/profile', authValidator, async (req, res) => {
 userRouter.delete("/favorite", authValidator, async (req, res) => {
     const {id} = req.query
     try {
-        let ids = id
-        if (typeof id === 'string') {
-            ids = [id]
-        }
+        const ids = await convertToArray(id)
         await User.updateOne(
             {_id: req.user._id},
             {$pull: {favorite: {$in: ids}}}

@@ -5,6 +5,7 @@ const Product = require("../models/productModel")
 
 const authValidator = require("../validators/authValidator");
 const adminValidator = require("../validators/adminValidator");
+const {convertToArray} = require("../vars/functions");
 
 //POST
 reviewRouter.post("/", authValidator, async (req, res) => {
@@ -42,8 +43,9 @@ reviewRouter.delete("/", adminValidator, async (req, res) => {
             await Review.deleteMany()
             await Product.updateMany({}, {$pull: {reviews: {$in: []}}})
         } else {
-            await Review.deleteOne({_id: id})
-            await Product.updateMany({_id: id}, {$pull: {reviews: id}})
+            const ids = await convertToArray(id)
+            await Review.deleteMany({_id: {$in: ids}})
+            await Product.updateMany({_id: {$in: ids}}, {$pull: {reviews: {$in: ids}}})
         }
         return res.status(201).json({message: "Successfully deleted"})
     } catch (e) {

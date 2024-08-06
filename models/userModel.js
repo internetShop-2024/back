@@ -37,7 +37,11 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now()
     },
-    refreshToken: String
+    refreshToken: String,
+    display: {
+        type: Boolean,
+        default: true
+    }
 })
 
 const User = mongoose.model("User", userSchema)

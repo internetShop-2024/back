@@ -2,9 +2,9 @@ const Product = require("../models/productModel");
 
 const productUpdateValidator = async (req, res, next) => {
     let editHistory = []
-
+    const id = req.query.id
     try {
-        const product = await Product.findById(req.query.id)
+        const product = await Product.findById(id)
         if (!product) {
             return res.status(404).json({error: "Product not found"})
         }

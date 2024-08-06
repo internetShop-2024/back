@@ -4,34 +4,49 @@ const Admin = require("../models/adminModel")
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Review = require("../models/reviewModel")
+const Product = require("../models/productModel")
+
+const {Parser} = require("json2csv")
 
 const adminValidator = require("../validators/adminValidator")
-const {passwordHash, adminTokenAssign, passwordCompare, convertToArray} = require("../vars/functions")
+const {
+    passwordHash,
+    adminTokenAssign,
+    passwordCompare,
+    convertToArray,
+    filterSystem,
+    export2csvSystem
+} = require("../vars/functions")
+const {join} = require("path");
+const {writeFileSync, unlinkSync} = require("fs");
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
-    try {
-        const {id, orderId} = req.query
-        if (id && !orderId) {
-            const user = await User.findById(id).select('_id createdAt fullName phone email city history')
-
-            if (!user)
-                return res.status(404).json({error: "User not found"})
-
-            return res.status(200).json({user: user})
-        } else if (id && orderId) {
-            const phone = await User.findById(id).select('phone').lean()
-            const order = await Order.find({_id: orderId, phone: phone.phone})
-            return res.status(200).json({order: order})
-        } else {
-            const users = await User.find().select('_id createdAt fullName phone email city history')
-            return res.status(200).json({users: users})
+        let {id, orderId} = req.query
+        try {
+            let users
+            if (id && !orderId) {
+                const user = await User.find({_id: id}).select('_id createdAt fullName phone email city history')
+                if (!user)
+                    return res.status(404).json({error: "User not found"})
+                return res.status(200).json({user: user})
+            } else if (id && orderId) {
+                const user = await User.findById(id).select('phone').lean()
+                const order = await Order.find({_id: orderId, phone: user.phone})
+                return res.status(200).json({order: order})
+            } else {
+                const data = await filterSystem(req.query)
+                const payload = data.payload
+                users = await User.find(payload).select("-password -refreshToken -__v").sort(data.sortOptions)
+                if (!users.length)
+                    return res.status(404).json({message: "Not Found"})
+                return res.status(200).json(users)
+            }
+        } catch (e) {
+            return res.status(500).json({error: e.message})
         }
-    } catch
-        (e) {
-        return res.status(500).json({error: e.message})
     }
-})
+)
 
 adminRouter.get("/reviews", adminValidator, async (req, res) => {
     const id = req.query.id
@@ -46,6 +61,21 @@ adminRouter.get("/reviews", adminValidator, async (req, res) => {
 
             return res.status(201).json({review: review})
         }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.get("/export", adminValidator, async (req, res) => {
+    let {id, collection} = req.query
+    try {
+        if (!collection)
+            return res.status(400).json({error: 'Collection name is required'})
+
+        const csv = await export2csvSystem(id, collection)
+        res.header('Content-Type', 'text/csv')
+        res.attachment(`${collection}.csv`)
+        return res.send(csv)
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

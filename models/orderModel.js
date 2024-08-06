@@ -22,8 +22,7 @@ const orderSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     deliveryType: {
         type: String,
@@ -61,6 +60,8 @@ const orderSchema = new mongoose.Schema({
         default: Date.now()
     },
 })
+
+orderSchema.path('localStorage').schema.set("_id", false)
 
 const Order = mongoose.model("Order", orderSchema)
 

@@ -4,7 +4,7 @@ const Product = require("../models/productModel")
 const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 
-const {productReviews, convertToArray} = require("../vars/functions")
+const {productReviews, convertToArray, filterSystem} = require("../vars/functions")
 
 const productUpdateValidator = require("../validators/productUpdateValidator")
 const adminValidator = require("../validators/adminValidator")
@@ -17,19 +17,71 @@ productRouter.get("/", adminValidator, async (req, res) => {
 
     try {
         if (!id) {
+            const data = await filterSystem(req.query)
             const totalProducts = await Product.countDocuments()
-            const products = await Product.find({display: true})
-                .skip((page - 1) * perPage)
-                .limit(perPage)
-                .lean()
 
-            const productsWithReviews = await productReviews(products)
+            let products
+
+            switch (true) {
+                case data.payload.sectionId !== undefined && data.payload.subSectionId !== undefined:
+                    throw new Error("You must provide only one of sectionId or subSectionId")
+
+                case data.payload.sectionId !== undefined:
+                    if (!data.payload.sectionId) {
+                        throw new Error("Invalid sectionId")
+                    }
+                    const section = await Section.findById(data.payload.sectionId).select("products").lean()
+                    if (!section || !section.products.length)
+                        return res.status(404).json({message: "Products not found"})
+
+                    data.payload._id = {$in: section.products}
+                    const {sectionId, ...sectionPayload} = data.payload
+                    products = await Product.find(sectionPayload)
+                        .skip((page - 1) * perPage)
+                        .limit(perPage)
+                        .sort(data.sortOptions)
+                        .lean()
+                    break
+
+                case data.payload.subSectionId !== undefined:
+                    if (!data.payload.subSectionId) {
+                        throw new Error("Invalid subSectionId")
+                    }
+                    const subSection = await SubSection.findById(data.payload.subSectionId).select("products").lean()
+                    if (!subSection || !subSection.products.length)
+                        return res.status(404).json({message: "Products not found"})
+
+                    data.payload._id = {$in: subSection.products}
+                    const {subSectionId, ...subSectionPayload} = data.payload
+                    products = await Product.find(subSectionPayload)
+                        .skip((page - 1) * perPage)
+                        .limit(perPage)
+                        .sort(data.sortOptions)
+                        .lean()
+                    break
+
+                default:
+                    products = await Product.find(data.payload)
+                        .skip((page - 1) * perPage)
+                        .limit(perPage)
+                        .sort(data.sortOptions)
+                        .lean()
+                    break
+            }
+
+            if (!products.length)
+                return res.status(404).json({message: "Not Found"})
+
+            await productReviews(products)
 
             return res.status(200).json({
-                products: productsWithReviews, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
+                products: products, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
             })
         } else {
             const product = await Product.findOne({_id: id})
+            if (!product)
+                return res.status(404).json({message: "Product not found"})
+
             return res.status(200).json({product: product})
         }
     } catch (e) {
@@ -85,16 +137,17 @@ productRouter.put("/", adminValidator, productUpdateValidator, async (req, res) 
 productRouter.delete("/", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
-        const ids = await convertToArray(id)
         if (!id) {
             await Product.deleteMany()
             await Section.updateMany({}, {$pull: {products: {$in: []}}})
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
             return res.status(201).json({message: "All products deleted"})
         } else {
+            const ids = await convertToArray(id)
+            console.log(ids)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await SubSection.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
-            await Product.deleteMany({_id: id})
+            await Product.deleteMany({_id: {$in: ids}})
             return res.status(201).json({message: "Product deleted"})
         }
     } catch (e) {
