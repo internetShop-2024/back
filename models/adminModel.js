@@ -10,11 +10,25 @@ const adminSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    calls: [{
+        callPhone: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now()
+        },
+        test: String
+    }],
     createdAt: {
         type: Date,
         default: Date.now()
     }
 })
+
+adminSchema.path("calls").schema.set("_id", false)
 
 const Admin = mongoose.model("Admin", adminSchema)
 

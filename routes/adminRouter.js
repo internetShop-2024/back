@@ -4,9 +4,6 @@ const Admin = require("../models/adminModel")
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Review = require("../models/reviewModel")
-const Product = require("../models/productModel")
-
-const {Parser} = require("json2csv")
 
 const adminValidator = require("../validators/adminValidator")
 const {
@@ -15,10 +12,8 @@ const {
     passwordCompare,
     convertToArray,
     filterSystem,
-    export2csvSystem
+    export2csvSystem, validatePhone
 } = require("../vars/functions")
-const {join} = require("path");
-const {writeFileSync, unlinkSync} = require("fs");
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -104,7 +99,7 @@ adminRouter.post("/create", async (req, res) => {
 
         res.cookie("accessToken", AT, {
             httpOnly: true,
-            secure: true
+            secure: false
         })
         return res.status(201).json({message: "Successfully created"})
     } catch (e) {
@@ -167,6 +162,25 @@ adminRouter.put("/review", adminValidator, async (req, res) => {
 
             return res.status(201).json({message: "Answered"})
         }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.put("/calls", async (req, res) => {
+    const {phone, text} = req.body
+    try {
+        const validatedPhone = await validatePhone(phone)
+        if (!validatedPhone)
+            return res.status(400).json({error: "Send correct phone number"})
+
+        const call = {
+            phone: phone,
+            text: text
+        }
+
+        await Admin.updateOne({}, {$push: {calls: call}})
+        return res.status(201).json({message: "We will call you"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

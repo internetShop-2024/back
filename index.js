@@ -14,7 +14,7 @@ app.use(logger("combined"))
 app.use(json())
 app.use(cors("*"))
 app.use("/", router)
-app.use(cookieParser())
+app.use(cookieParser)
 
 mongoose.connect(mongoUri).then(() => {
     app.listen(port, () => {

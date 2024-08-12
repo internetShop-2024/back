@@ -10,7 +10,7 @@ const productUpdateValidator = require("../validators/productUpdateValidator")
 const adminValidator = require("../validators/adminValidator")
 
 //GET
-productRouter.get("/", adminValidator, async (req, res) => {
+productRouter.get("/", async (req, res) => {
     const perPage = 18
     const page = parseInt(req.query.page) || 1
     const id = req.query.id
@@ -116,7 +116,8 @@ productRouter.post("/", adminValidator, async (req, res) => {
             message: "Successfully created", product: product
         })
     } catch (e) {
-        return res.status(500).json({error: e.message})
+        console.log(e)
+        return res.status(500).json({error: e})
     }
 })
 

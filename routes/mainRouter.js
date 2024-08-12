@@ -7,6 +7,10 @@ const orderRouter = require("../routes/orderRouter")
 const blogRouter = require("../routes/blogRouter")
 const adminRouter = require("../routes/adminRouter")
 
+router.get("/", async (req, res) => {
+    return res.send("Життя цікаве і мотивація то є сильна")
+})
+
 router.use("/products", productRouter)
 router.use("/reviews", reviewRouter)
 router.use("/catalog", sectionRouter)
