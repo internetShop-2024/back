@@ -78,7 +78,8 @@ productRouter.get("/", async (req, res) => {
                 products: products, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
             })
         } else {
-            const product = await Product.findOne({_id: id})
+            const product = await Product.findOne({_id: id}).lean()
+            await productReviews([product])
             if (!product)
                 return res.status(404).json({message: "Product not found"})
 

@@ -7,11 +7,11 @@ const authValidator = async (req, res, next) => {
         return res.status(401).json({error: 'Unauthorized'})
     }
 
-    const tokenMatch = req.headers.cookie?.match(/refreshToken=([^;]+)/)
+    const tokenMatch = req.headers.authorization?.match(/refreshToken=([^;]+)/)
     const refreshToken = tokenMatch ? tokenMatch[1] : null
-    if (!refreshToken) {
-        return res.status(401).json({error: 'Refresh token missing'})
-    }
+    // if (!refreshToken) {
+    //     return res.status(401).json({error: 'Refresh token missing'})
+    // }
 
     try {
         let user = await validateToken(token, "JWT")

@@ -149,8 +149,8 @@ const tokenAssign = (data) => {
         data = data.toObject()
     }
     const {password, refreshToken, exp, ...payload} = data
-    const JWT = jwt.sign(payload, secretJWT, {expiresIn: '30s'})
-    const RT = jwt.sign({_id: payload._id}, secretRT, {expiresIn: '1h'})
+    const JWT = jwt.sign(payload, secretJWT, {expiresIn: '24d'})
+    const RT = jwt.sign({_id: payload._id}, secretRT, {expiresIn: '7d'})
     return {JWT, RT}
 }
 
