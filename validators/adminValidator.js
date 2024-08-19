@@ -3,7 +3,6 @@ const {validateToken} = require("../vars/functions")
 const adminValidator = async (req, res, next) => {
     try {
         const tokenMatch = req.headers.authorization?.match(/accessToken=([^;]+)/)
-        console.log(req.headers)
         const token = tokenMatch ? tokenMatch[1] : null
         if (!token)
             return res.status(401).json({error: 'Unauthorized'})

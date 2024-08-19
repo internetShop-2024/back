@@ -4,6 +4,7 @@ const Order = require("../models/orderModel")
 const orderValidator = require("../validators/orderValidator")
 const {generateOrderNumber, orderProducts, convertToArray, filterSystem} = require("../vars/functions")
 const adminValidator = require("../validators/adminValidator");
+const Product = require("../models/productModel");
 
 //GET
 orderRouter.get('/', adminValidator, async (req, res) => {
@@ -21,7 +22,7 @@ orderRouter.get('/', adminValidator, async (req, res) => {
             if (!order)
                 return res.status(404).json({error: 'Order not found'})
 
-           await orderProducts(order)
+            await orderProducts(order)
 
             return res.status(200).json({order: order})
         }
@@ -41,11 +42,13 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         city,
         address,
         paymentType,
-        payment,
         customerComment,
         managerComment,
         agreement
     } = req.body
+
+    let ids = []
+    let quantities = []
 
     try {
         const orderNumber = generateOrderNumber()
@@ -74,11 +77,30 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
             {$push: {history: order._id}}
         )
 
+        localStorage.forEach(item => {
+            ids.push(item.goodsId)
+            quantities.push(item.quantity)
+        })
+
+        for (let i = 0; i < ids.length; i++) {
+            const product = await Product.findById(ids[i])
+            if (!product) res.status(404).json({error: "Product not found"})
+            if (product.quantity < quantities[i]) return res.status(400).json({error: `Not enough quantity for '${product.name}'`})
+        }
+
+        const bulkOps = ids.map((id, index) => ({
+            updateOne: {
+                filter: {_id: id},
+                update: {$inc: {quantity: -quantities[index]}}
+            }
+        }))
+
+        await Product.bulkWrite(bulkOps)
+
         return res.status(201).json({
             message: "Order Successfully created",
             order: order
         })
-
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
