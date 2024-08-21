@@ -97,11 +97,10 @@ adminRouter.post("/create", async (req, res) => {
 
         await newAdmin.save()
 
-        res.cookie("accessToken", AT, {
-            httpOnly: true,
-            secure: false
+        return res.status(201).json({
+            message: "Successfully created",
+            accessToken: AT,
         })
-        return res.status(201).json({message: "Successfully created"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -123,11 +122,10 @@ adminRouter.post("/login", async (req, res) => {
 
         const AT = adminTokenAssign(admin)
 
-        res.cookie("accessToken", AT, {
-            httpOnly: true,
-            secure: true
+        return res.status(201).json({
+            message: "Successfully",
+            accessToken: AT
         })
-        return res.status(201).json({message: "Successfully"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

@@ -114,6 +114,22 @@ const productReviews = async (products) => {
     }))
 }
 
+const reviewFullname = async (reviews) => {
+    return await Promise.all(reviews.map(async review => {
+        review.toObject()
+        if (review) {
+            const user = await User.findById(review.reviewSenderId).select("fullname").lean()
+            review = {
+                content: review.content,
+                fullname: user.fullname,
+                _id: review._id,
+                createdAt: review.createdAt
+            }
+        }
+        return review
+    }))
+}
+
 //USERS
 const passwordHash = async (password) => {
     return await bcrypt.hash(password, 10)
@@ -219,7 +235,7 @@ module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem,
     //PRODUCTS
-    productReviews,
+    productReviews, reviewFullname,
     //USERS
     passwordHash, passwordCompare, validateEmail, validatePassword, validateFullname, validatePhone,
     //TOKEN
