@@ -9,6 +9,7 @@ const SubSection = require("../models/subSectionModel");
 const User = require("../models/userModel");
 const {Parser} = require("json2csv");
 const Order = require("../models/orderModel");
+const Section = require("../models/sectionModel");
 
 //ADMIN
 const convertToArray = async (data) => {
@@ -115,6 +116,7 @@ const productReviews = async (products) => {
 }
 
 const reviewFullname = async (reviews) => {
+    console.log(typeof reviews)
     return await Promise.all(reviews.map(async review => {
         review.toObject()
         if (review) {
@@ -128,6 +130,29 @@ const reviewFullname = async (reviews) => {
         }
         return review
     }))
+}
+
+const productCategory = async (id) => {
+    try {
+        let category
+        let payload = {
+            section: null,
+            subSection: null
+        }
+        category = await Section.findOne({products: id}).select('name photo').lean()
+        if (category) {
+            payload.section = category
+            return payload
+        }
+        category = await SubSection.findOne({products: id}).select('name')
+        if (category) {
+            payload.section = await Section.findOne({subSections: category._id}).select('name photo').lean()
+            payload.subSection = category
+            return payload
+        }
+    } catch (e) {
+        throw new Error(e)
+    }
 }
 
 //USERS
@@ -235,7 +260,7 @@ module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem,
     //PRODUCTS
-    productReviews, reviewFullname,
+    productReviews, reviewFullname, productCategory,
     //USERS
     passwordHash, passwordCompare, validateEmail, validatePassword, validateFullname, validatePhone,
     //TOKEN

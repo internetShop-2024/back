@@ -4,7 +4,7 @@ const Product = require("../models/productModel")
 const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 
-const {productReviews, reviewFullname, convertToArray, filterSystem} = require("../vars/functions")
+const {productReviews, reviewFullname, convertToArray, filterSystem, productCategory} = require("../vars/functions")
 
 const productUpdateValidator = require("../validators/productUpdateValidator")
 const adminValidator = require("../validators/adminValidator")
@@ -79,8 +79,11 @@ productRouter.get("/", async (req, res) => {
             })
         } else {
             const product = await Product.findOne({_id: id}).lean()
+            if (!product) return res.status(404).json({error: "Product not found"})
             await productReviews([product])
             product.reviews = await reviewFullname(product.reviews)
+            product.category = await productCategory(product._id)
+            console.log(product)
             if (!product)
                 return res.status(404).json({message: "Product not found"})
 
