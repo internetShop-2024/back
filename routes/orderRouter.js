@@ -84,7 +84,7 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
 
         for (let i = 0; i < ids.length; i++) {
             const product = await Product.findById(ids[i])
-            if (!product) res.status(404).json({error: "Product not found"})
+            if (!product) return res.status(404).json({error: "Product not found"})
             if (product.quantity < quantities[i]) return res.status(400).json({error: `Not enough quantity for '${product.name}'`})
         }
 
