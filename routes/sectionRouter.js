@@ -9,7 +9,7 @@ const Review = require("../models/reviewModel")
 const adminValidator = require("../validators/adminValidator")
 const {sectionProducts, convertToArray, sectionSubSections, productReviews} = require("../vars/functions");
 
-sectionRouter.get("/", adminValidator, async (req, res) => {
+sectionRouter.get("/", async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
@@ -105,7 +105,7 @@ sectionRouter.delete("/", adminValidator, async (req, res) => {
 })
 
 //SUBSECTIONS
-sectionRouter.get("/subsections", adminValidator, async (req, res) => {
+sectionRouter.get("/subsections", async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {

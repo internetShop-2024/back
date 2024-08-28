@@ -109,50 +109,39 @@ const export2csvSystem = async (id, collection) => {
 const productReviews = async (products) => {
     return await Promise.all(products.map(async product => {
         if (product.reviews && product.reviews.length > 0) {
-            product.reviews = await Review.find({_id: {$in: product.reviews}}).select("-product")
+            const reviews = await Review.find({_id: {$in: product.reviews}}).select("-product").lean();
+            product.reviews = await Promise.all(reviews.map(async (review) => {
+                const user = await User.findOne({_id: review.reviewSenderId}).select('fullname').lean();
+                return {
+                    ...review,
+                    fullname: user.fullname
+                };
+            }));
         }
-        return product
-    }))
+        return product;
+    }));
 }
 
-const reviewFullname = async (reviews) => {
-    console.log(typeof reviews)
-    return await Promise.all(reviews.map(async review => {
-        review.toObject()
-        if (review) {
-            const user = await User.findById(review.reviewSenderId).select("fullname").lean()
-            review = {
-                content: review.content,
-                fullname: user.fullname,
-                _id: review._id,
-                createdAt: review.createdAt
-            }
-        }
-        return review
-    }))
-}
-
-const productCategory = async (id) => {
-    try {
-        let category
-        let payload = {
+const productCategory = async (products) => {
+    return await Promise.all(products.map(async (product) => {
+        let categorySchema = {
             section: null,
             subSection: null
         }
-        category = await Section.findOne({products: id}).select('name photo').lean()
+        let category = await Section.findOne({products: product._id}).select('name photo').lean()
         if (category) {
-            payload.section = category
-            return payload
+            categorySchema.section = category
+        } else {
+            category = await SubSection.findOne({products: product._id}).select('name').lean()
+            if (category) {
+                categorySchema.section = await Section.findOne({subSections: category._id}).select('name photo').lean()
+                categorySchema.subSection = category
+            }
         }
-        category = await SubSection.findOne({products: id}).select('name')
-        if (category) {
-            payload.section = await Section.findOne({subSections: category._id}).select('name photo').lean()
-            payload.subSection = category
-            return payload
-        }
-    } catch (e) {
-        throw new Error(e)
-    }
+        product.category = categorySchema;
+
+        return product
+    }))
 }
 
 //USERS
@@ -260,7 +249,7 @@ module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem,
     //PRODUCTS
-    productReviews, reviewFullname, productCategory,
+    productReviews, productCategory,
     //USERS
     passwordHash, passwordCompare, validateEmail, validatePassword, validateFullname, validatePhone,
     //TOKEN
