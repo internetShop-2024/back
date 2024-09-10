@@ -4,7 +4,6 @@ const ObjectId = require("mongoose").Types.ObjectId
 const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 const Product = require("../models/productModel")
-const Review = require("../models/reviewModel")
 
 const adminValidator = require("../validators/adminValidator")
 const {sectionProducts, convertToArray, sectionSubSections, productReviews} = require("../vars/functions");

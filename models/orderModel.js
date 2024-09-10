@@ -37,19 +37,17 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    paymentType: {
-        type: String,
-        enum: ["transfer", "acquiring"],
-        required: true
+    invoiceId: String,
+    payment: {
+        type: Boolean,
+        default: false
     },
-    payment: Boolean,
     customerComment: String,
     managerComment: String,
-    agreement: Boolean,
     status: {
         type: String,
-        enum: ["inProcess", "sent", "delivered", 'notDelivered'],
-        default: "inProcess"
+        enum: ["wait", "inProcess", "sent", "delivered", 'cancelled'],
+        default: "wait"
     },
     createdAt: {
         type: Date,

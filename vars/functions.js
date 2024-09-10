@@ -16,6 +16,10 @@ const convertToArray = async (data) => {
     return data.split(',')
 }
 
+const convertToBool = async (value) => {
+    return value === "1" ? true : value === '0' ? false : value
+}
+
 const filterSystem = async (data) => {
     let payload = {}
     let sortOptions = {}
@@ -40,7 +44,7 @@ const filterSystem = async (data) => {
                 payload.createdAt.$gte = date
                 payload.createdAt.$lt = nextDay
             }
-        } else if (['article', 'price', 'quantity'].includes(item)) {
+        } else if (['article', 'price', 'quantity', 'rate'].includes(item)) {
             const items = await convertToArray(data[item])
             if (items.length > 1) {
                 payload[item] = {
@@ -51,9 +55,11 @@ const filterSystem = async (data) => {
                 payload[item] = parseFloat(data[item])
             }
         } else if (['display', 'payment'].includes(item)) {
-            payload[item] = data[item] === '1' ? true : data[item] === '0' ? false : data[item]
+            payload[item] = await convertToBool(data[item])
         } else if (['name', 'fullname', 'customerComment', "managerComment"].includes(item)) {
             payload[item] = {$regex: data[item], $options: 'i'}
+        } else if (['promotion'].includes(item)) {
+            payload = {...payload, 'promotion.isActive': await convertToBool(data[item])}
         } else {
             const items = await convertToArray(data[item])
             if (items.length > 1) {

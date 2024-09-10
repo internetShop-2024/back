@@ -36,6 +36,10 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    rate: {
+        type: Number,
+        default: 0
+    },
     history: [{
         column: String,
         oldValue: mongoose.Schema.Types.Mixed,

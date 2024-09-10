@@ -5,9 +5,10 @@ const orderValidator = require("../validators/orderValidator")
 const {generateOrderNumber, orderProducts, convertToArray, filterSystem} = require("../vars/functions")
 const adminValidator = require("../validators/adminValidator");
 const Product = require("../models/productModel");
+const {monoXSIGN} = require("../vars/privateVars");
 
 //GET
-orderRouter.get('/', adminValidator, async (req, res) => {
+orderRouter.get('/', async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
@@ -41,10 +42,9 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         deliveryType,
         city,
         address,
-        paymentType,
         customerComment,
         managerComment,
-        agreement
+        invoiceId
     } = req.body
 
     let ids = []
@@ -52,7 +52,6 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
 
     try {
         const orderNumber = generateOrderNumber()
-        const paymentIdentifier = paymentType === 'acquiring'
 
         const order = new Order({
             orderNumber: orderNumber,
@@ -63,11 +62,9 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
             deliveryType: deliveryType,
             city: city,
             address: address,
-            paymentType: paymentType,
-            payment: paymentIdentifier,
             customerComment: customerComment,
             managerComment: managerComment,
-            agreement: agreement
+            invoiceId: invoiceId,
         })
 
         await order.save()
@@ -91,7 +88,7 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         const bulkOps = ids.map((id, index) => ({
             updateOne: {
                 filter: {_id: id},
-                update: {$inc: {quantity: -quantities[index]}}
+                update: {$inc: {quantity: -quantities[index], rate: +quantities[index]}},
             }
         }))
 
@@ -103,6 +100,17 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
+    }
+})
+
+orderRouter.post("/pay-status", async (req, res) => {
+    const {invoiceId, status} = req.body;
+    try {
+        if (status === "success") await Order.updateOne({invoiceId: invoiceId}, {payment: true, status: "inProcess"})
+
+        return res.status(200).header("X-Sign", monoXSIGN)
+    } catch (e) {
+        return res.status(500)
     }
 })
 

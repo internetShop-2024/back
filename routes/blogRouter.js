@@ -2,8 +2,9 @@ const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
 const adminValidator = require("../validators/adminValidator");
 const {convertToArray} = require("../vars/functions");
+
 //GET
-blogRouter.get('/', adminValidator, async (req, res) => {
+blogRouter.get('/', async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
@@ -41,7 +42,7 @@ blogRouter.post('/', adminValidator, async (req, res) => {
 })
 
 //PUT
-blogRouter.put('/', async (req, res) => {
+blogRouter.put('/', adminValidator, async (req, res) => {
     const {id} = req.query
     const {title, text, image, sections, display} = req.body
     try {
@@ -60,7 +61,7 @@ blogRouter.put('/', async (req, res) => {
 })
 
 //DELETE
-blogRouter.delete('/', async (req, res) => {
+blogRouter.delete('/', adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {

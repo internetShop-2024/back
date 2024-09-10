@@ -10,9 +10,6 @@ const orderValidator = async (req, res, next) => {
         if (!validatePhone(req.body.phone))
             return res.status(400).json({error: 'Invalid phone number'})
 
-        if (!req.body.agreement)
-            return res.status(400).json({error: 'You must agree to the terms'})
-
         if (req.body.cost < 400)
             return res.status(400).json({error: 'Minimum order amount is 400 UAH'})
 
