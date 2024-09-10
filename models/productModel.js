@@ -40,6 +40,7 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    section: mongoose.Schema.Types.ObjectId,
     history: [{
         column: String,
         oldValue: mongoose.Schema.Types.Mixed,

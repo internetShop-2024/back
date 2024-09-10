@@ -20,7 +20,7 @@ const adminSchema = new mongoose.Schema({
             type: Date,
             default: Date.now()
         },
-        test: String
+        text: String
     }],
     createdAt: {
         type: Date,

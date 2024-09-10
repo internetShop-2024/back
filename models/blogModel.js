@@ -13,9 +13,8 @@ const blogSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    image: {
-        type: String
-    },
+    image: String,
+    video: String,
     sections: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: "Section"

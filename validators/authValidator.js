@@ -1,17 +1,14 @@
 const {validateToken, tokenAssign} = require("../vars/functions")
+
 const User = require("../models/userModel")
 
 const authValidator = async (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '')
+    const token = req.headers.authorization.replace("Bearer ", "")
     if (!token) {
         return res.status(401).json({error: 'Unauthorized'})
     }
 
-    const tokenMatch = req.headers.authorization?.match(/refreshToken=([^;]+)/)
-    const refreshToken = tokenMatch ? tokenMatch[1] : null
-    // if (!refreshToken) {
-    //     return res.status(401).json({error: 'Refresh token missing'})
-    // }
+    const refreshToken = req.headers.refreshtoken
 
     try {
         let user = await validateToken(token, "JWT")
@@ -29,13 +26,13 @@ const authValidator = async (req, res, next) => {
             user.refreshToken = NRT
             await user.save()
 
-            res.cookie('refreshToken', NRT, {httpOnly: true, secure: true})
+            res.setHeader('refreshToken', NRT)
             req.token = JWT
             req.user = user.toObject()
-            return next()
+            next()
         }
         req.user = user
-        return next()
+        next()
     } catch (e) {
         return res.status(400).json({error: e.message})
     }

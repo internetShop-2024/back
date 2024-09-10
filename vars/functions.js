@@ -25,8 +25,9 @@ const filterSystem = async (data) => {
     let sortOptions = {}
     for (const item of Object.keys(data)) {
         if (['orderBy', 'page', 'sortBy'].includes(item)) continue
-
-        if (['createdAt'].includes(item)) {
+        if (['sectionId', 'subSectionId'].includes(item)) {
+            payload['section'] = data[item]
+        } else if (['createdAt'].includes(item)) {
             const items = await convertToArray(data[item])
             payload[item] = {}
             if (items.length > 1) {
@@ -134,11 +135,11 @@ const productCategory = async (products) => {
             section: null,
             subSection: null
         }
-        let category = await Section.findOne({products: product._id}).select('name photo').lean()
+        let category = await Section.findOne({id: product.section}).select('name photo').lean()
         if (category) {
             categorySchema.section = category
         } else {
-            category = await SubSection.findOne({products: product._id}).select('name').lean()
+            category = await SubSection.findOne({id: product.section}).select('name').lean()
             if (category) {
                 categorySchema.section = await Section.findOne({subSections: category._id}).select('name photo').lean()
                 categorySchema.subSection = category

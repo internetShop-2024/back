@@ -1,6 +1,5 @@
 const router = require("express").Router()
 const productRouter = require("../routes/productRouter")
-const reviewRouter = require("../routes/reviewRouter")
 const sectionRouter = require("../routes/sectionRouter")
 const userRouter = require("../routes/userRouter")
 const orderRouter = require("../routes/orderRouter")
@@ -12,7 +11,6 @@ router.get("/", async (req, res) => {
 })
 
 router.use("/products", productRouter)
-router.use("/reviews", reviewRouter)
 router.use("/catalog", sectionRouter)
 router.use("/users", userRouter)
 router.use("/orders", orderRouter)

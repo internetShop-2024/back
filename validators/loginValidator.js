@@ -1,6 +1,6 @@
 const {validateEmail, passwordCompare} = require("../vars/functions");
 const User = require("../models/userModel");
-const authorizationValidator = async (req, res, next) => {
+const loginValidator = async (req, res, next) => {
     try {
         const email = req.body.email
         if (!validateEmail(email))
@@ -20,4 +20,4 @@ const authorizationValidator = async (req, res, next) => {
     }
 }
 
-module.exports = authorizationValidator
+module.exports = loginValidator

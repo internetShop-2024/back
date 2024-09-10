@@ -3,11 +3,12 @@ const userRouter = require("express").Router()
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Product = require("../models/productModel")
+const Review = require("../models/reviewModel")
 
 const {passwordHash, tokenAssign, convertToArray} = require("../vars/functions");
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
-const authorizationValidator = require("../validators/authorizationValidator")
+const authorizationValidator = require("../validators/loginValidator")
 
 userRouter.get("/profile", authValidator, async (req, res) => {
     try {
@@ -21,7 +22,7 @@ userRouter.get("/profile", authValidator, async (req, res) => {
 userRouter.get('/history', authValidator, async (req, res) => {
     const user = req.user
     try {
-        const orders = await Order.find({phone: user.phone}).lean()
+        const orders = await Order.find({phone: user.phone, deleted: false}).lean()
         if (!orders.length)
             return res.status(404).json({error: "No orders found for this user"})
 
@@ -66,7 +67,7 @@ userRouter.post("/register", registerValidator, async (req, res) => {
         const {JWT, RT} = tokenAssign(user)
 
         user.refreshToken = RT
-        res.cookie('refreshToken', RT, {httpOnly: true, secure: true})
+        res.header('refreshToken', RT)
 
         await user.save()
 
@@ -101,7 +102,7 @@ userRouter.post("/authorization", authorizationValidator, async (req, res) => {
         const {JWT, RT: NRT} = tokenAssign(user)
 
         user.refreshToken = NRT
-        res.cookie('refreshToken', NRT, {httpOnly: true, secure: true})
+        res.header('refreshToken', NRT)
 
         await user.save()
 
@@ -137,6 +138,33 @@ userRouter.post("/favorite", authValidator, async (req, res) => {
         } else {
             return res.status(404).json({error: "Goods not found"})
         }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+userRouter.post("/review", authValidator, async (req, res) => {
+    const {text} = req.body
+    const {id} = req.query
+    try {
+        const review = new Review({
+            reviewSenderId: req.user._id,
+            product: id,
+            content: {text: text}
+        })
+
+        const updated = await Product.updateOne(
+            {_id: id},
+            {$push: {reviews: review._id}}
+        )
+
+        if (updated.modifiedCount === 0)
+            return res.status(400).json({error: "Review not created"})
+
+        await review.save()
+        return res.status(201).json({
+            message: "Successfully created", review: review
+        })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -181,6 +209,18 @@ userRouter.delete("/favorite", authValidator, async (req, res) => {
         return res.status(201).json({message: "Deleted from favorite"})
     } catch (e) {
         return res.status(500).json({error: e.message})
+    }
+})
+
+userRouter.delete("/orders", authValidator, async (req, res) => {
+    const user = req.user
+    const id = req.params.id
+    if (!id) {
+        await Order.updateMany({phone: user.phone}, {$set: {deleted: true}})
+        return res.status(201).json({message: "All Orders deleted"})
+    } else {
+        const ids = await convertToArray(id)
+        await Order.updateMany({id: {$in: ids}, phone: user.phone}, {$set: {deleted: true}})
     }
 })
 module.exports = userRouter

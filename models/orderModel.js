@@ -49,6 +49,10 @@ const orderSchema = new mongoose.Schema({
         enum: ["wait", "inProcess", "sent", "delivered", 'cancelled'],
         default: "wait"
     },
+    deleted: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now()
