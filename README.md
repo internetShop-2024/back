@@ -2,9 +2,8 @@ How to launch
 * .env.example > .env
 * fill .env
 * npm i
-* npx sequelize-cli init
-* npx sequelize-cli db:migrate
 * npm start
+* docs - /api-docs
 
 
 'Alan.postman_collection.json' import into Postman for test
