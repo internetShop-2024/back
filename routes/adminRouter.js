@@ -5,12 +5,14 @@ const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Review = require("../models/reviewModel")
 const Blog = require("../models/blogModel")
-const Product = require("../models/productModel");
-const Section = require("../models/sectionModel");
-const SubSection = require("../models/subSectionModel");
+const Product = require("../models/productModel")
+const Section = require("../models/sectionModel")
+const SubSection = require("../models/subSectionModel")
 
 const adminValidator = require("../validators/adminValidator")
-const productUpdateValidator = require("../validators/productUpdateValidator");
+const productUpdateValidator = require("../validators/productUpdateValidator")
+
+const {perPage} = require("../vars/publicVars")
 
 const {
     passwordHash,
@@ -20,8 +22,6 @@ const {
     filterSystem,
     export2csvSystem, validatePhone, orderProducts, productReviews, productCategory
 } = require("../vars/functions")
-
-const perPage = 18
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -238,7 +238,7 @@ adminRouter.post("/login", async (req, res) => {
     }
 })
 
-adminRouter.post('/post', adminValidator, async (req, res) => {
+adminRouter.post('/posts', adminValidator, async (req, res) => {
     const {title, text, image, video, sections, subSections} = req.body
 
     try {
@@ -257,9 +257,9 @@ adminRouter.post('/post', adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.post("/product", adminValidator, async (req, res) => {
+adminRouter.post("/products", adminValidator, async (req, res) => {
     const {
-        photo, name, price, article, description, sectionId, subSectionId, promotion, quantity
+        photo, name, price, article, description, sectionId, subSectionId, promotion, quantity, video
     } = req.body
     try {
         const result = (sectionId !== undefined && subSectionId !== undefined)
@@ -276,7 +276,8 @@ adminRouter.post("/product", adminValidator, async (req, res) => {
             description: description,
             promotion: promotion,
             quantity: quantity,
-            section: result
+            section: result,
+            video: video
         })
 
         if (sectionId) {
@@ -295,7 +296,7 @@ adminRouter.post("/product", adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.post("/section", adminValidator, async (req, res) => {
+adminRouter.post("/sections", adminValidator, async (req, res) => {
     const {photo, name, subSections, products} = req.body
     try {
         if (subSections?.length > 0) subSections.forEach(subSection => new ObjectId(subSection))
@@ -316,7 +317,7 @@ adminRouter.post("/section", adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.post("/subsection", adminValidator, async (req, res) => {
+adminRouter.post("/subsections", adminValidator, async (req, res) => {
     const {name, products} = req.body
     const {id} = req.query
     try {
@@ -346,7 +347,7 @@ adminRouter.post("/subsection", adminValidator, async (req, res) => {
 })
 
 //PUT
-adminRouter.put("/review", adminValidator, async (req, res) => {
+adminRouter.put("/reviews", adminValidator, async (req, res) => {
     const id = req.query.id
     const {replyText} = req.body
     try {
@@ -398,7 +399,7 @@ adminRouter.put("/calls", async (req, res) => {
     }
 })
 
-adminRouter.put('/post', adminValidator, async (req, res) => {
+adminRouter.put('/posts', adminValidator, async (req, res) => {
     const {id} = req.query
     const {title, text, image, video, sections, display} = req.body
     try {
@@ -416,7 +417,7 @@ adminRouter.put('/post', adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.put("/product", adminValidator, productUpdateValidator, async (req, res) => {
+adminRouter.put("/products", adminValidator, productUpdateValidator, async (req, res) => {
     try {
         const {history, ...payload} = req.product
 
@@ -544,7 +545,7 @@ adminRouter.delete("/reviews", adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.delete("/", adminValidator, async (req, res) => {
+adminRouter.delete("/sections", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {

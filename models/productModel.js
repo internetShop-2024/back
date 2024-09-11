@@ -21,6 +21,8 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    characteristics: String,
+    video: String,
     reviews: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: "Review"

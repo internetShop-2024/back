@@ -3,14 +3,11 @@ const {validateToken, tokenAssign} = require("../vars/functions")
 const User = require("../models/userModel")
 
 const authValidator = async (req, res, next) => {
-    const token = req.headers.authorization.replace("Bearer ", "")
-    if (!token) {
-        return res.status(401).json({error: 'Unauthorized'})
-    }
-
-    const refreshToken = req.headers.refreshtoken
-
     try {
+        const token = req.headers.authorization?.replace("Bearer ", "")
+        if (!token) return res.status(401).json({error: 'Unauthorized'})
+
+        const refreshToken = req.headers.refreshtoken
         let user = await validateToken(token, "JWT")
         if (!user) {
             const decoded = await validateToken(refreshToken, "RT")
@@ -33,7 +30,8 @@ const authValidator = async (req, res, next) => {
         }
         req.user = user
         next()
-    } catch (e) {
+    } catch
+        (e) {
         return res.status(400).json({error: e.message})
     }
 }

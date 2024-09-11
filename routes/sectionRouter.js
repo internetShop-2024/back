@@ -6,20 +6,28 @@ const Product = require("../models/productModel")
 
 const {sectionProducts, sectionSubSections, productReviews} = require("../vars/functions");
 
+const {perPage} = require("../vars/publicVars");
+
 sectionRouter.get("/", async (req, res) => {
     const {id} = req.query
+    const page = parseInt(req.query.page) || 1
+    const totalSections = await Section.countDocuments()
     try {
         if (!id) {
             const sections = await Section.find()
-            return res.status(200).json({sections: sections})
+                .select("-__v -createdAt")
+                .skip((page - 1) * perPage)
+                .limit(perPage)
+                .lean()
+            return res.status(200).json({
+                sections: sections, currentPage: page, totalPages: Math.ceil(totalSections / perPage)
+            })
         } else {
             const section = await Section.findById(id).lean()
             if (!section) return res.status(404).json({error: "Section not found"})
-
             if (section.products?.length > 0) {
                 await sectionProducts(section)
             }
-
             if (section.subSections?.length > 0) {
                 await sectionSubSections(section)
             }
@@ -33,10 +41,18 @@ sectionRouter.get("/", async (req, res) => {
 //SUBSECTIONS
 sectionRouter.get("/subsections", async (req, res) => {
     const {id} = req.query
+    const page = parseInt(req.query.page) || 1
     try {
         if (!id) {
+            const totalSubSections = await SubSection.countDocuments()
             const subSections = await SubSection.find()
-            return res.status(200).json({subSection: subSections})
+                .select("-__v -createdAt")
+                .skip((page - 1) * perPage)
+                .limit(perPage)
+                .lean()
+            return res.status(200).json({
+                subSection: subSections, currentPage: page, totalPages: Math.ceil(totalSubSections / perPage)
+            })
         } else {
             const subsection = await SubSection.findById(id).lean()
             if (!subsection) {

@@ -1,13 +1,23 @@
 const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
 
+const {perPage} = require("../vars/publicVars")
+
 //GET
 blogRouter.get('/', async (req, res) => {
+    const page = parseInt(req.query.page) || 1
     const {id} = req.query
     try {
         if (!id) {
+            const totalPosts = await Blog.countDocuments()
             const posts = await Blog.find({display: true})
-            return res.status(200).json({posts: posts})
+                .select("-__v -publicationDate")
+                .skip((page - 1) * perPage)
+                .limit(perPage)
+                .lean()
+            return res.status(200).json({
+                posts: posts, currentPage: page, totalPages: Math.ceil(totalPosts / perPage)
+            })
         } else {
             const post = await Blog.findById(id)
             if (!post) {

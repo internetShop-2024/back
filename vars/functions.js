@@ -232,6 +232,28 @@ const orderProducts = async (order) => {
     }))
 }
 
+const quantityProducts = async (data) => {
+    let ids = []
+    let quantities = []
+    data.forEach(item => {
+        ids.push(item.goodsId)
+        quantities.push(item.quantity)
+    })
+
+    for (let i = 0; i < ids.length; i++) {
+        const product = await Product.findById(ids[i])
+        if (!product) return res.status(404).json({error: "Product not found"})
+        if (product.quantity < quantities[i]) return res.status(400).json({error: `Not enough quantity for '${product.name}'`})
+    }
+
+    return ids.map((id, index) => ({
+        updateOne: {
+            filter: {_id: id},
+            update: {$inc: {quantity: -quantities[index], rate: +quantities[index]}},
+        }
+    }))
+}
+
 //SECTIONS
 const sectionProducts = async (section) => {
     const products = await Product.find({_id: {$in: section.products}}).lean()
@@ -262,7 +284,7 @@ module.exports = {
     //TOKEN
     tokenAssign, validateToken, adminTokenAssign,
     //ORDERS
-    generateOrderNumber, orderProducts,
+    generateOrderNumber, orderProducts, quantityProducts,
     //SECTIONS
     sectionProducts, sectionSubSections
 }

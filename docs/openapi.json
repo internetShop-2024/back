@@ -1,0 +1,5254 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Pixel WEB SERVER",
+    "version": "1.0.0",
+    "description": "Документація до беку"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "https",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Admin",
+      "description": "Операції, доступні лише адміністраторам"
+    },
+    {
+      "name": "User",
+      "description": "Операції, доступні лише зареєстрованим користувачам"
+    },
+    {
+      "name": "Anon",
+      "description": "Операції, доступні всім"
+    }
+  ],
+  "paths": {
+    "/admin/users": {
+      "get": {
+        "summary": "Отримати інформацію про користувачів",
+        "description": "Цей ендпоінт дозволяє адміністраторам отримати інформацію про користувачів. Підтримує запити за ID користувача, ID замовлення або фільтрацію на основі параметрів запиту.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID користувача, якого потрібно отримати. Якщо вказано, повертає вказаного користувача.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "orderId",
+            "in": "query",
+            "description": "ID замовлення для отримання інформації про конкретного користувача. Вимагає ID користувача.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішно отримано інформацію про користувача або замовлення",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "fullName": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string"
+                          },
+                          "history": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "objectId"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "order": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Користувача або замовлення не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "error": "Користувача не знайдено"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "error": "Внутрішня помилка сервера"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалення користувачів",
+        "description": "Цей ендпоінт дозволяє видаляти користувачів з бази даних. Можна видалити всіх користувачів або лише вибраних, вказавши їх ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "ID користувачів для видалення. Якщо не вказано, видаляються всі користувачі.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792c"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Користувачі успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "Deleted"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reviews": {
+      "get": {
+        "summary": "Отримати відгуки",
+        "description": "Цей ендпоінт дозволяє адміністраторам отримати відгуки. Якщо параметр `id` не вказано, повертає всі відгуки. Якщо `id` вказано, повертає конкретний відгук за цим ID.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID відгука, який потрібно отримати. Якщо не вказано, повертаються всі відгуки.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішно отримано відгуки",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reviews": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "reviewSenderId": {
+                            "type": "string"
+                          },
+                          "product": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "object",
+                            "properties": {
+                              "text": {
+                                "type": "string"
+                              },
+                              "reply": {
+                                "type": "object",
+                                "properties": {
+                                  "replySenderId": {
+                                    "type": "string"
+                                  },
+                                  "replyText": {
+                                    "type": "string"
+                                  },
+                                  "repliedAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "review": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "reviewSenderId": {
+                          "type": "string"
+                        },
+                        "product": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "object",
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "reply": {
+                              "type": "object",
+                              "properties": {
+                                "replySenderId": {
+                                  "type": "string"
+                                },
+                                "replyText": {
+                                  "type": "string"
+                                },
+                                "repliedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Відгука не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "error": "Відгука не знайдено"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "error": "Внутрішня помилка сервера"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Відповісти на відгук",
+        "description": "Цей ендпоінт дозволяє адміністраторам відповідати на відгуки. Адміністратор може вказати текст відповіді, який буде доданий до відгуку.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID відгуку, на який потрібно відповісти.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792b"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "replyText": {
+                    "type": "string",
+                    "description": "Текст відповіді на відгук.",
+                    "example": "Дякуємо за ваш відгук! Ми врахуємо ваші зауваження."
+                  }
+                },
+                "required": [
+                  "replyText"
+                ]
+              },
+              "example": {
+                "replyText": "Дякуємо за ваш відгук! Ми врахуємо ваші зауваження."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Відповідь успішно додана до відгуку",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне додавання відповіді",
+                      "example": "Answered"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Answered"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність ID або тексту відповіді",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Fill the inputs"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Fill the inputs"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Не знайдено відгуку з вказаним ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Review not found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Review not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалення відгуків",
+        "description": "Цей ендпоінт дозволяє видаляти відгуки з бази даних. Можна видалити всі відгуки або лише вибрані, вказавши їх ID. Також оновлює продукти, видаляючи відгуки з їх списків.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "ID відгуків для видалення. Якщо не вказано, видаляються всі відгуки.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "603c6b2f7f2e1b001f64792c"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Відгуки успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "Successfully deleted"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Successfully deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/export": {
+      "get": {
+        "summary": "Експорт даних у CSV",
+        "description": "Цей ендпоінт дозволяє адміністраторам експортувати дані з вказаної колекції у формат CSV. Потрібно вказати параметр `collection`. За бажанням, можна також вказати параметр `id` для експорту конкретних документів.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID документів для експорту. Якщо не вказано, експортуються всі документи з колекції.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "collection",
+            "in": "query",
+            "description": "Назва колекції, з якої потрібно експортувати дані.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішний експорт даних у форматі CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка через відсутність назви колекції",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Collection name is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/posts": {
+      "get": {
+        "summary": "Отримати пости блогу",
+        "description": "Цей ендпоінт дозволяє адміністраторам отримувати пости блогу. Можна отримати список постів з пагінацією або один пост за його ID.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації. Значення за замовчуванням - 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID поста для отримання конкретного поста. Якщо не вказано, повертаються всі пости з пагінацією.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішне отримання постів блогу",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "post": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  },
+                  "example": {
+                    "posts": [
+                      {
+                        "id": "1",
+                        "title": "Post Title 1",
+                        "content": "Post content here.",
+                        "createdAt": "2024-09-11T00:00:00Z"
+                      },
+                      {
+                        "id": "2",
+                        "title": "Post Title 2",
+                        "content": "Post content here.",
+                        "createdAt": "2024-09-10T00:00:00Z"
+                      }
+                    ],
+                    "post": {
+                      "id": "1",
+                      "title": "Post Title 1",
+                      "content": "Post content here.",
+                      "createdAt": "2024-09-11T00:00:00Z"
+                    },
+                    "currentPage": 1,
+                    "totalPages": 5
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Створити новий пост",
+        "description": "Цей ендпоінт дозволяє створити новий пост у блозі. Пост буде збережений у базі даних і повернеться підтвердження про успішне створення разом із даними посту.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Заголовок посту",
+                    "example": "Новий пост про технології"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Текст посту",
+                    "example": "Це детальний текст про нові технології в програмуванні."
+                  },
+                  "image": {
+                    "type": "string",
+                    "description": "URL зображення для посту",
+                    "example": "https://example.com/image.jpg"
+                  },
+                  "video": {
+                    "type": "string",
+                    "description": "URL відео для посту",
+                    "example": "https://example.com/video.mp4"
+                  },
+                  "sections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "Секції, до яких належить пост",
+                      "example": "Technology"
+                    }
+                  },
+                  "subSections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "Підсекції, до яких належить пост",
+                      "example": "Software Development"
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "text"
+                ]
+              },
+              "example": {
+                "title": "Новий пост про технології",
+                "text": "Це детальний текст про нові технології в програмуванні.",
+                "image": "https://example.com/image.jpg",
+                "video": "https://example.com/video.mp4",
+                "sections": [
+                  "Technology"
+                ],
+                "subSections": [
+                  "Software Development"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пост успішно створений",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне створення посту",
+                      "example": "Post created successfully"
+                    },
+                    "post": {
+                      "type": "object",
+                      "description": "Дані створеного посту",
+                      "properties": {
+                        "title": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "image": {
+                          "type": "string"
+                        },
+                        "video": {
+                          "type": "string"
+                        },
+                        "sections": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "subSections": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "example": {
+                        "title": "Новий пост про технології",
+                        "text": "Це детальний текст про нові технології в програмуванні.",
+                        "image": "https://example.com/image.jpg",
+                        "video": "https://example.com/video.mp4",
+                        "sections": [
+                          "Technology"
+                        ],
+                        "subSections": [
+                          "Software Development"
+                        ],
+                        "createdAt": "2024-09-11T00:00:00Z"
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "post"
+                  ]
+                },
+                "example": {
+                  "message": "Post created successfully",
+                  "post": {
+                    "title": "Новий пост про технології",
+                    "text": "Це детальний текст про нові технології в програмуванні.",
+                    "image": "https://example.com/image.jpg",
+                    "video": "https://example.com/video.mp4",
+                    "sections": [
+                      "Technology"
+                    ],
+                    "subSections": [
+                      "Software Development"
+                    ],
+                    "createdAt": "2024-09-11T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Оновити пост",
+        "description": "Цей ендпоінт дозволяє адміністраторам оновлювати пости в блозі. Для оновлення посту потрібно вказати його ID та нові дані.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID посту, який потрібно оновити.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792b"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Новий заголовок посту.",
+                    "example": "Оновлений заголовок"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Новий текст посту.",
+                    "example": "Оновлений текст посту."
+                  },
+                  "image": {
+                    "type": "string",
+                    "description": "Нове посилання на зображення посту.",
+                    "example": "https://example.com/image.jpg"
+                  },
+                  "video": {
+                    "type": "string",
+                    "description": "Нове посилання на відео посту.",
+                    "example": "https://example.com/video.mp4"
+                  },
+                  "sections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "ID секцій, до яких належить пост.",
+                      "example": "603c6b2f7f2e1b001f64792c"
+                    },
+                    "description": "Секції, до яких належить пост."
+                  },
+                  "display": {
+                    "type": "boolean",
+                    "description": "Чи слід показувати пост на сайті.",
+                    "example": true
+                  }
+                }
+              },
+              "example": {
+                "title": "Оновлений заголовок",
+                "text": "Оновлений текст посту.",
+                "image": "https://example.com/image.jpg",
+                "video": "https://example.com/video.mp4",
+                "sections": [
+                  "603c6b2f7f2e1b001f64792c"
+                ],
+                "display": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Пост успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне оновлення посту.",
+                      "example": "Post updated successfully"
+                    },
+                    "post": {
+                      "type": "object",
+                      "description": "Оновлений пост.",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "ID посту.",
+                          "example": "603c6b2f7f2e1b001f64792b"
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "Заголовок посту.",
+                          "example": "Оновлений заголовок"
+                        },
+                        "text": {
+                          "type": "string",
+                          "description": "Текст посту.",
+                          "example": "Оновлений текст посту."
+                        },
+                        "image": {
+                          "type": "string",
+                          "description": "Посилання на зображення посту.",
+                          "example": "https://example.com/image.jpg"
+                        },
+                        "video": {
+                          "type": "string",
+                          "description": "Посилання на відео посту.",
+                          "example": "https://example.com/video.mp4"
+                        },
+                        "sections": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "description": "ID секцій, до яких належить пост.",
+                            "example": "603c6b2f7f2e1b001f64792c"
+                          }
+                        },
+                        "display": {
+                          "type": "boolean",
+                          "description": "Чи слід показувати пост на сайті.",
+                          "example": true
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "post"
+                  ]
+                },
+                "example": {
+                  "message": "Post updated successfully",
+                  "post": {
+                    "id": "603c6b2f7f2e1b001f64792b",
+                    "title": "Оновлений заголовок",
+                    "text": "Оновлений текст посту.",
+                    "image": "https://example.com/image.jpg",
+                    "video": "https://example.com/video.mp4",
+                    "sections": [
+                      "603c6b2f7f2e1b001f64792c"
+                    ],
+                    "display": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність необхідних даних",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Post not found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Post not found"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Не знайдено пост з вказаним ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Post not found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Post not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалення постів",
+        "description": "Цей ендпоінт дозволяє видаляти пости з бази даних. Можна видалити всі пости або лише вибрані, вказавши їх ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "ID постів для видалення. Якщо не вказано, видаляються всі пости.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792c"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Пости успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "Post deleted successfully"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Post deleted successfully"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/orders": {
+      "get": {
+        "summary": "Отримати замовлення",
+        "description": "Цей ендпоінт дозволяє адміністраторам отримувати замовлення. Можна отримати список замовлень з пагінацією або одне замовлення за його ID.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації. Значення за замовчуванням - 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID замовлення для отримання конкретного замовлення. Якщо не вказано, повертаються всі замовлення з пагінацією.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішне отримання замовлень",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "order": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  },
+                  "example": {
+                    "orders": [
+                      {
+                        "id": "1",
+                        "user": "User ID 1",
+                        "status": "Pending",
+                        "createdAt": "2024-09-11T00:00:00Z"
+                      },
+                      {
+                        "id": "2",
+                        "user": "User ID 2",
+                        "status": "Shipped",
+                        "createdAt": "2024-09-10T00:00:00Z"
+                      }
+                    ],
+                    "order": {
+                      "id": "1",
+                      "user": "User ID 1",
+                      "status": "Pending",
+                      "createdAt": "2024-09-11T00:00:00Z"
+                    },
+                    "currentPage": 1,
+                    "totalPages": 5
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Замовлення не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Order Not Found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалення замовлень",
+        "description": "Цей ендпоінт дозволяє видаляти замовлення з бази даних. Можна видалити всі замовлення або лише вибрані, вказавши їх ID. Також очищає історію користувачів від видалених замовлень.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "body",
+            "required": false,
+            "description": "ID замовлень для видалення. Якщо не вказано, видаляються всі замовлення.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "603c6b2f7f2e1b001f64792c"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Замовлення успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "All orders deleted"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "All orders deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/products": {
+      "get": {
+        "summary": "Отримати продукти",
+        "description": "Отримання списку продуктів з пагінацією або одного продукту за його ID. Можливість фільтрації продуктів за різними параметрами, такими як `sectionId`, `subSectionId`, `createdAt`, `article`, `price`, `quantity`, `rate`, `display`, `payment`, `name`, `fullname`, `customerComment`, `managerComment`, `promotion` та інші. Фільтрація може бути здійснена за допомогою діапазонів або точних значень.",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації. Значення за замовчуванням - 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID продукту для отримання конкретного продукту. Якщо не вказано, повертаються всі продукти з пагінацією.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "sectionId",
+            "in": "query",
+            "description": "ID розділу для фільтрації продуктів. Не можна вказувати одночасно з `subSectionId`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "subSectionId",
+            "in": "query",
+            "description": "ID підрозділу для фільтрації продуктів. Не можна вказувати одночасно з `sectionId`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "createdAt",
+            "in": "query",
+            "description": "Дата або діапазон дат для фільтрації продуктів за датою створення. Можна вказати одну дату або діапазон дат (у форматі масиву).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "article",
+            "in": "query",
+            "description": "Артикул продукту або діапазон артикулів.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "description": "Ціна продукту або діапазон цін.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quantity",
+            "in": "query",
+            "description": "Кількість продуктів або діапазон кількостей.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rate",
+            "in": "query",
+            "description": "Оцінка продукту або діапазон оцінок.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "display",
+            "in": "query",
+            "description": "Фільтрація за статусом відображення продукту (true/false).",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "payment",
+            "in": "query",
+            "description": "Фільтрація за статусом оплати (true/false).",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Назва продукту або частковий збіг для фільтрації.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fullname",
+            "in": "query",
+            "description": "Повне ім'я для фільтрації.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customerComment",
+            "in": "query",
+            "description": "Коментар клієнта для фільтрації.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "managerComment",
+            "in": "query",
+            "description": "Коментар менеджера для фільтрації.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "promotion",
+            "in": "query",
+            "description": "Фільтрація продуктів за активністю промоції (true/false).",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Список полів для сортування.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Напрямок сортування (наприклад, `asc` або `desc`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішне отримання продуктів",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "products": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "section": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "subSection": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "article": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          },
+                          "rate": {
+                            "type": "number"
+                          },
+                          "display": {
+                            "type": "boolean"
+                          },
+                          "payment": {
+                            "type": "boolean"
+                          },
+                          "promotion": {
+                            "type": "object",
+                            "properties": {
+                              "isActive": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "products": [
+                    {
+                      "id": "1",
+                      "name": "Product 1",
+                      "price": 100,
+                      "description": "Description of Product 1",
+                      "section": {
+                        "id": "1",
+                        "name": "Section 1"
+                      },
+                      "subSection": {
+                        "id": "2",
+                        "name": "SubSection 1"
+                      },
+                      "createdAt": "2024-09-01T12:00:00Z",
+                      "article": "A123",
+                      "quantity": 10,
+                      "rate": 4.5,
+                      "display": true,
+                      "payment": true,
+                      "promotion": {
+                        "isActive": true
+                      }
+                    }
+                  ],
+                  "currentPage": 1,
+                  "totalPages": 5
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Продукти не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Product Not Found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Internal Server Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Створити новий продукт",
+        "description": "Цей ендпоінт дозволяє створити новий продукт та зберегти його в базі даних. Продукт може бути прив'язаний до секції або підсекції.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "description": "URL фотографії продукту",
+                    "example": "https://example.com/photo.jpg"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Назва продукту",
+                    "example": "Продукт 1"
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Ціна продукту",
+                    "example": 29.99
+                  },
+                  "article": {
+                    "type": "string",
+                    "description": "Артикул продукту",
+                    "example": "ART123456"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Опис продукту",
+                    "example": "Це детальний опис продукту."
+                  },
+                  "sectionId": {
+                    "type": "string",
+                    "description": "ID секції, до якої належить продукт",
+                    "example": "603c6b2f7f2e1b001f64792a"
+                  },
+                  "subSectionId": {
+                    "type": "string",
+                    "description": "ID підсекції, до якої належить продукт",
+                    "example": "603c6b2f7f2e1b001f64792b"
+                  },
+                  "promotion": {
+                    "type": "boolean",
+                    "description": "Чи є продукт в акції",
+                    "example": true
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "Кількість продукту в наявності",
+                    "example": 100
+                  }
+                },
+                "required": [
+                  "name",
+                  "price",
+                  "article"
+                ]
+              },
+              "example": {
+                "photo": "https://example.com/photo.jpg",
+                "name": "Продукт 1",
+                "price": 29.99,
+                "article": "ART123456",
+                "description": "Це детальний опис продукту.",
+                "sectionId": "603c6b2f7f2e1b001f64792a",
+                "promotion": true,
+                "quantity": 100
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Продукт успішно створений",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "description": "Повідомлення про успішне створення продукту",
+                        "example": "Successfully created"
+                      },
+                      "product": {
+                        "type": "object",
+                        "description": "Дані створеного продукту",
+                        "properties": {
+                          "photo": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number",
+                            "format": "float"
+                          },
+                          "article": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "section": {
+                            "type": "string"
+                          },
+                          "promotion": {
+                            "type": "boolean"
+                          },
+                          "quantity": {
+                            "type": "integer"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "example": {
+                          "photo": "https://example.com/photo.jpg",
+                          "name": "Продукт 1",
+                          "price": 29.99,
+                          "article": "ART123456",
+                          "description": "Це детальний опис продукту.",
+                          "section": "603c6b2f7f2e1b001f64792a",
+                          "promotion": true,
+                          "quantity": 100,
+                          "createdAt": "2024-09-11T00:00:00Z"
+                        }
+                      }
+                    },
+                    "required": [
+                      "message",
+                      "product"
+                    ]
+                  },
+                  "example": {
+                    "message": "Successfully created",
+                    "product": {
+                      "photo": "https://example.com/photo.jpg",
+                      "name": "Продукт 1",
+                      "price": 29.99,
+                      "article": "ART123456",
+                      "description": "Це детальний опис продукту.",
+                      "section": "603c6b2f7f2e1b001f64792a",
+                      "promotion": true,
+                      "quantity": 100,
+                      "createdAt": "2024-09-11T00:00:00Z"
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Помилка запиту через неправильний формат даних",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Опис помилки",
+                        "example": "Both sectionId and subSectionId are defined"
+                      }
+                    },
+                    "required": [
+                      "error"
+                    ]
+                  },
+                  "example": {
+                    "error": "Both sectionId and subSectionId are defined"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Внутрішня помилка сервера",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Опис помилки",
+                        "example": "Server error"
+                      }
+                    },
+                    "required": [
+                      "error"
+                    ]
+                  },
+                  "example": {
+                    "error": "Server error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Оновити продукт",
+        "description": "Цей ендпоінт дозволяє адміністраторам оновлювати деталі продукту. Для оновлення продукту потрібно вказати ID продукту та нові дані.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID продукту, який потрібно оновити.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792b"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "description": "Посилання на зображення продукту.",
+                    "example": "https://example.com/photo.jpg"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Назва продукту.",
+                    "example": "Новий продукт"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Ціна продукту.",
+                    "example": 19.99
+                  },
+                  "article": {
+                    "type": "string",
+                    "description": "Артикул продукту.",
+                    "example": "ABC123"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Опис продукту.",
+                    "example": "Детальний опис продукту."
+                  },
+                  "promotion": {
+                    "type": "string",
+                    "description": "Інформація про акцію або знижку.",
+                    "example": "Знижка 10% до кінця місяця"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "Кількість продукту на складі.",
+                    "example": 100
+                  },
+                  "sectionId": {
+                    "type": "string",
+                    "description": "ID секції, до якої належить продукт.",
+                    "example": "603c6b2f7f2e1b001f64792c"
+                  },
+                  "subSectionId": {
+                    "type": "string",
+                    "description": "ID підсекції, до якої належить продукт.",
+                    "example": "603c6b2f7f2e1b001f64792d"
+                  }
+                }
+              },
+              "example": {
+                "photo": "https://example.com/photo.jpg",
+                "name": "Новий продукт",
+                "price": 19.99,
+                "article": "ABC123",
+                "description": "Детальний опис продукту.",
+                "promotion": "Знижка 10% до кінця місяця",
+                "quantity": 100,
+                "sectionId": "603c6b2f7f2e1b001f64792c",
+                "subSectionId": "603c6b2f7f2e1b001f64792d"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Продукт успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне оновлення продукту.",
+                      "example": "Product successfully updated"
+                    },
+                    "product": {
+                      "type": "object",
+                      "description": "Оновлений продукт.",
+                      "properties": {
+                        "photo": {
+                          "type": "string",
+                          "description": "Посилання на зображення продукту.",
+                          "example": "https://example.com/photo.jpg"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Назва продукту.",
+                          "example": "Новий продукт"
+                        },
+                        "price": {
+                          "type": "number",
+                          "description": "Ціна продукту.",
+                          "example": 19.99
+                        },
+                        "article": {
+                          "type": "string",
+                          "description": "Артикул продукту.",
+                          "example": "ABC123"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Опис продукту.",
+                          "example": "Детальний опис продукту."
+                        },
+                        "promotion": {
+                          "type": "string",
+                          "description": "Інформація про акцію або знижку.",
+                          "example": "Знижка 10% до кінця місяця"
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "description": "Кількість продукту на складі.",
+                          "example": 100
+                        },
+                        "sectionId": {
+                          "type": "string",
+                          "description": "ID секції, до якої належить продукт.",
+                          "example": "603c6b2f7f2e1b001f64792c"
+                        },
+                        "subSectionId": {
+                          "type": "string",
+                          "description": "ID підсекції, до якої належить продукт.",
+                          "example": "603c6b2f7f2e1b001f64792d"
+                        }
+                      },
+                      "required": [
+                        "photo",
+                        "name",
+                        "price",
+                        "article",
+                        "description",
+                        "promotion",
+                        "quantity",
+                        "sectionId",
+                        "subSectionId"
+                      ]
+                    },
+                    "changes": {
+                      "type": "object",
+                      "description": "Історія змін продукту.",
+                      "properties": {
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Дата та час останнього оновлення.",
+                          "example": "2024-09-11T12:00:00Z"
+                        },
+                        "changedFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "description": "Список змінених полів."
+                          },
+                          "example": [
+                            "price",
+                            "description"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "product",
+                    "changes"
+                  ]
+                },
+                "example": {
+                  "message": "Product successfully updated",
+                  "product": {
+                    "photo": "https://example.com/photo.jpg",
+                    "name": "Новий продукт",
+                    "price": 19.99,
+                    "article": "ABC123",
+                    "description": "Оновлений текст продукту.",
+                    "promotion": "Знижка 10% до кінця місяця",
+                    "quantity": 100,
+                    "sectionId": "603c6b2f7f2e1b001f64792c",
+                    "subSectionId": "603c6b2f7f2e1b001f64792d"
+                  },
+                  "changes": {
+                    "updatedAt": "2024-09-11T12:00:00Z",
+                    "changedFields": [
+                      "price",
+                      "description"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність необхідних даних або помилку валідації",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid product ID"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid product ID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Не знайдено продукт з вказаним ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Product not found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Product not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалення продуктів",
+        "description": "Цей ендпоінт дозволяє видаляти продукти з бази даних. Можна видалити всі продукти або лише вибрані, вказавши їх ID. Також оновлює секції та підсекції, видаляючи продукти з їх списків.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "ID продуктів для видалення. Якщо не вказано, видаляються всі продукти.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "603c6b2f7f2e1b001f64792c"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Продукти успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "All products deleted"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "All products deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sections": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Створити нову секцію",
+        "description": "Цей ендпоінт дозволяє створити нову секцію та зберегти її в базі даних. Секція може містити підсекції та продукти.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "description": "URL фотографії секції",
+                    "example": "https://example.com/photo.jpg"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Назва секції",
+                    "example": "Секція 1"
+                  },
+                  "subSections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "ID підсекцій, що належать до цієї секції",
+                      "example": "603c6b2f7f2e1b001f64792b"
+                    },
+                    "description": "Список ID підсекцій"
+                  },
+                  "products": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "ID продуктів, що належать до цієї секції",
+                      "example": "603c6b2f7f2e1b001f64792a"
+                    },
+                    "description": "Список ID продуктів"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
+              "example": {
+                "photo": "https://example.com/photo.jpg",
+                "name": "Секція 1",
+                "subSections": [
+                  "603c6b2f7f2e1b001f64792b"
+                ],
+                "products": [
+                  "603c6b2f7f2e1b001f64792a"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Секція успішно створена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне створення секції",
+                      "example": "Successfully created"
+                    },
+                    "section": {
+                      "type": "object",
+                      "description": "Дані створеної секції",
+                      "properties": {
+                        "photo": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "subSections": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "example": {
+                        "photo": "https://example.com/photo.jpg",
+                        "name": "Секція 1",
+                        "subSections": [
+                          "603c6b2f7f2e1b001f64792b"
+                        ],
+                        "products": [
+                          "603c6b2f7f2e1b001f64792a"
+                        ],
+                        "createdAt": "2024-09-11T00:00:00Z"
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "section"
+                  ]
+                },
+                "example": {
+                  "message": "Successfully created",
+                  "section": {
+                    "photo": "https://example.com/photo.jpg",
+                    "name": "Секція 1",
+                    "subSections": [
+                      "603c6b2f7f2e1b001f64792b"
+                    ],
+                    "products": [
+                      "603c6b2f7f2e1b001f64792a"
+                    ],
+                    "createdAt": "2024-09-11T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через неправильний формат даних або відсутність обов'язкових полів",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid data format"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid data format"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалення секцій",
+        "description": "Цей ендпоінт дозволяє видаляти секції з бази даних. Можна видалити всі секції або лише вибрані, вказавши їх ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "ID секцій для видалення. Якщо не вказано, видаляються всі секції.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "603c6b2f7f2e1b001f64792c"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Секції успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "Deleted"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/subsections": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Створити нову підсекцію",
+        "description": "Цей ендпоінт дозволяє створити нову підсекцію та додати її до відповідної секції. Підсекція може містити продукти.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID секції, до якої буде додана нова підсекція.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792b"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Назва підсекції",
+                    "example": "Підсекція 1"
+                  },
+                  "products": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "ID продуктів, що відносяться до цієї підсекції",
+                      "example": "603c6b2f7f2e1b001f64792a"
+                    },
+                    "description": "Список ID продуктів"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
+              "example": {
+                "name": "Підсекція 1",
+                "products": [
+                  "603c6b2f7f2e1b001f64792a"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Підсекція успішно створена та додана до секції",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне створення підсекції",
+                      "example": "Successfully created"
+                    },
+                    "subSection": {
+                      "type": "object",
+                      "description": "Дані створеної підсекції",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "example": {
+                        "name": "Підсекція 1",
+                        "products": [
+                          "603c6b2f7f2e1b001f64792a"
+                        ],
+                        "createdAt": "2024-09-11T00:00:00Z"
+                      }
+                    }
+                  },
+                  "required": [
+                    "message",
+                    "subSection"
+                  ]
+                },
+                "example": {
+                  "message": "Successfully created",
+                  "subSection": {
+                    "name": "Підсекція 1",
+                    "products": [
+                      "603c6b2f7f2e1b001f64792a"
+                    ],
+                    "createdAt": "2024-09-11T00:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність секції або неспроможність створити підсекцію",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "SubSection not created"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "SubSection not created"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Не знайдено секції з вказаним ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Section not found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Section not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Видалення підсекцій",
+        "description": "Цей ендпоінт дозволяє видаляти підсекції з бази даних. Можна видалити всі підсекції або лише вибрані, вказавши їх ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "ID підсекцій для видалення. Якщо не вказано, видаляються всі підсекції.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "603c6b2f7f2e1b001f64792c"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Підсекції успішно видалені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "Deleted"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Deleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через некоректні дані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid request data"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid request data"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/promotion": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Оновити акції продуктів у секції",
+        "description": "Цей ендпоінт дозволяє оновлювати акції для всіх продуктів у вказаній секції. Ви можете вказати знижку та активність акції.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID секції, продукти якої потрібно оновити.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792c"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "discount": {
+                    "type": "number",
+                    "description": "Знижка, яку потрібно застосувати до ціни продуктів (у вигляді коефіцієнта, наприклад 0.1 для 10%).",
+                    "example": 0.1
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "Чи активна акція. Якщо false, акція буде деактивована.",
+                    "example": true
+                  }
+                },
+                "required": [
+                  "isActive"
+                ]
+              },
+              "example": {
+                "discount": 0.15,
+                "isActive": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Продукти успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне оновлення акцій.",
+                      "example": "Products updated successfully"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Products updated successfully"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність необхідних даних або помилку валідації",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Invalid section ID"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Invalid section ID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Не знайдено секцію з вказаним ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Section not found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Section not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/profile": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Профіль користувача",
+        "description": "Цей запит дозволяє отримати інформацію про профіль користувача, який автентифікований за допомогою JWT токена. Необхідно надати заголовок `Authorization` з дійсним JWT токеном.",
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь з інформацією про користувача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "favorite": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "deleted": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "user": {
+                    "_id": "66e0754c092b2c7a8eea094d",
+                    "email": "ivan@gmaill.com",
+                    "fullname": "Мийхай Іван Миколайович",
+                    "phone": "0937226252",
+                    "history": [],
+                    "favorite": [],
+                    "createdAt": "2024-09-10T16:35:19.023Z"
+                  },
+                  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Неправильний або відсутній токен авторизації",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/history": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Отримати історію замовлень користувача",
+        "description": "Цей запит дозволяє отримати список всіх замовлень користувача, які не були видалені. Необхідно надати заголовок `Authorization` з дійсним JWT токеном.",
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь зі списком замовлень користувача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "orderNumber": {
+                            "type": "string"
+                          },
+                          "localStorage": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          },
+                          "cost": {
+                            "type": "number"
+                          },
+                          "fullname": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          },
+                          "deliveryType": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string"
+                          },
+                          "address": {
+                            "type": "string"
+                          },
+                          "customerComment": {
+                            "type": "string"
+                          },
+                          "managerComment": {
+                            "type": "string"
+                          },
+                          "invoiceId": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "deleted": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "orders": [
+                    {
+                      "_id": "64e0754c092b2c7a8eea094d",
+                      "orderNumber": "ORD123456",
+                      "localStorage": [
+                        {
+                          "goodsId": "prod1",
+                          "quantity": 2
+                        }
+                      ],
+                      "cost": 400.00,
+                      "fullname": "Іван Миколайович",
+                      "phone": "0937226252",
+                      "deliveryType": "Courier",
+                      "city": "Kyiv",
+                      "address": "123 Main St",
+                      "customerComment": "Please deliver after 6 PM",
+                      "managerComment": "Urgent delivery",
+                      "invoiceId": "inv123456",
+                      "createdAt": "2024-09-10T16:35:19.023Z",
+                      "deleted": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Замовлення не знайдено для цього користувача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "No orders found for this user"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/favorite": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Отримати список улюблених",
+        "description": "Цей запит дозволяє отримати список улюблених продуктів користувача. Необхідно надати заголовок `Authorization` з дійсним JWT токеном.",
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь зі списком улюблених продуктів користувача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "favorite": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "photo": {
+                            "type": "string"
+                          },
+                          "article": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "favorite": [
+                    {
+                      "_id": "64e0754c092b2c7a8eea094d",
+                      "name": "Продукт 1",
+                      "price": 100.00,
+                      "description": "Опис продукту 1",
+                      "photo": "http://example.com/photo1.jpg",
+                      "article": "ART123",
+                      "createdAt": "2024-09-10T16:35:19.023Z"
+                    },
+                    {
+                      "_id": "64e0754c092b2c7a8eea094e",
+                      "name": "Продукт 2",
+                      "price": 150.00,
+                      "description": "Опис продукту 2",
+                      "photo": "http://example.com/photo2.jpg",
+                      "article": "ART124",
+                      "createdAt": "2024-09-10T16:35:19.023Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Улюблені продукти не знайдені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "No favorite found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Додати товари до улюблених користувача",
+        "description": "Цей ендпоінт дозволяє користувачам додавати товари до списку улюблених.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "goods": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "objectId"
+                    }
+                  }
+                },
+                "example": {
+                  "goods": [
+                    "60d21b4667d0d8992e610c85",
+                    "60d21b4667d0d8992e610c86"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Товари успішно додані до улюблених",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Успішно додано"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Товари не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Товари не знайдено"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Внутрішня помилка сервера"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Оновлення профілю користувача",
+        "description": "Цей ендпоінт дозволяє користувачам оновлювати свій профіль, включаючи номер телефону, місто та адресу.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "Новий номер телефону"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "Нове місто"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Нова адреса"
+                  }
+                },
+                "example": {
+                  "phone": "0951234567",
+                  "city": "Київ",
+                  "address": "Вулиця Шевченка, 1"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Профіль успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Profile updated successfully"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "type": "string"
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "objectId"
+                          }
+                        },
+                        "favorite": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "objectId"
+                          }
+                        }
+                      }
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Видалення товарів з обраного списку",
+        "description": "Цей ендпоінт дозволяє користувачам видаляти товари зі свого обраного списку.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Список ідентифікаторів товарів, які потрібно видалити, розділених комами.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "60d21b4667d0d8992e610c85,60d21b4667d0d8992e610c86"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Товари успішно видалено з обраного списку",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Deleted from favorite"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/orders": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Видалення замовлень користувача",
+        "description": "Цей ендпоінт дозволяє користувачам видаляти свої замовлення. Можна видалити всі замовлення або вибрані за ідентифікаторами.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Список ідентифікаторів замовлень, які потрібно видалити, розділених комами. Якщо не вказано, будуть видалені всі замовлення користувача.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "60d21b4667d0d8992e610c85,60d21b4667d0d8992e610c86"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Замовлення успішно видалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "All Orders deleted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/review": {
+      "post": {
+        "summary": "Додати відгук до товару",
+        "description": "Цей ендпоінт дозволяє користувачам додавати відгуки до товарів.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID товару, до якого додається відгук",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Текст відгуку"
+                  }
+                },
+                "example": {
+                  "text": "Чудовий товар, рекомендую!"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Відгук успішно створено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Successfully created"
+                    },
+                    "review": {
+                      "type": "object",
+                      "properties": {
+                        "reviewSenderId": {
+                          "type": "string",
+                          "format": "objectId"
+                        },
+                        "product": {
+                          "type": "string",
+                          "format": "objectId"
+                        },
+                        "content": {
+                          "type": "object",
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не вдалося створити відгук",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Review not created"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/register": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Реєстрація нового користувача",
+        "description": "Цей запит дозволяє зареєструвати нового користувача. Необхідно надати всі обов'язкові поля у тілі запиту. Після успішної реєстрації повертається об'єкт користувача разом з JWT токеном для доступу до захищених ресурсів.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email користувача"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Пароль користувача"
+                  },
+                  "fullname": {
+                    "type": "string",
+                    "description": "Повне ім'я користувача"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Номер телефону користувача"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password",
+                  "fullname",
+                  "phone"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Успішна реєстрація користувача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішну реєстрацію"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "type": "string"
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "favorite": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT токен для доступу до захищених ресурсів"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Successfully created",
+                  "user": {
+                    "email": "ivan@gmaill.com",
+                    "fullname": "Мийхай Іван Миколайович",
+                    "phone": "0937226252",
+                    "city": "Kyiv",
+                    "address": "Street 123",
+                    "history": [
+                      "64e0754c092b2c7a8eea094d"
+                    ],
+                    "favorite": [
+                      "64e0754c092b2c7a8eea094e"
+                    ]
+                  },
+                  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність обов'язкових полів або неправильний формат даних",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Fill all inputs"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/authorization": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "User"
+        ],
+        "summary": "Авторизація користувача",
+        "description": "Цей запит дозволяє авторизувати користувача за допомогою email та пароля. Після успішної авторизації повертається об'єкт користувача разом з JWT токеном для доступу до захищених ресурсів.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email користувача"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Пароль користувача"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успішна авторизація користувача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішну авторизацію"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "type": "string"
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "favorite": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT токен для доступу до захищених ресурсів"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Successfully authorized",
+                  "user": {
+                    "email": "ivan@gmaill.com",
+                    "fullname": "Мийхай Іван Миколайович",
+                    "phone": "0937226252",
+                    "city": "Kyiv",
+                    "address": "Street 123",
+                    "history": [
+                      "64e0754c092b2c7a8eea094d"
+                    ],
+                    "favorite": [
+                      "64e0754c092b2c7a8eea094e"
+                    ]
+                  },
+                  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка запиту через відсутність обов'язкових полів або неправильний формат даних",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Fill all inputs"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Вивід продуктів на клієнті",
+        "description": "Цей запит дозволяє отримати список продуктів з підтримкою фільтрів, пагінації та можливістю пошуку за ID продукту",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID продукту для отримання одного продукту",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "description": "Фільтр за ціною",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "rate",
+            "in": "query",
+            "description": "Фільтр за рейтингом",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "promotion",
+            "in": "query",
+            "description": "Фільтр за наявністю акції",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sectionId",
+            "in": "query",
+            "description": "ID секції для фільтрації за секцією",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subSectionId",
+            "in": "query",
+            "description": "ID підсекції для фільтрації за підсекцією",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь із продуктами",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "products": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "rate": {
+                            "type": "number"
+                          },
+                          "promotion": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "example": 5
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Продукт не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Not Found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog": {
+      "get": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Вивід категорій",
+        "description": "Цей запит дозволяє отримати всі секції з пагінацією або конкретну секцію за ID. Можливе отримання секцій зі списком продуктів та підсекцій.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID секції для отримання конкретної секції",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь із списком секцій або конкретною секцією",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "section": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "subSections": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "sections": [
+                    {
+                      "id": "1",
+                      "name": "Секція 1"
+                    },
+                    {
+                      "id": "2",
+                      "name": "Секція 2"
+                    }
+                  ],
+                  "section": {
+                    "id": "1",
+                    "name": "Секція 1",
+                    "products": [
+                      {
+                        "id": "101",
+                        "name": "Продукт 1"
+                      },
+                      {
+                        "id": "102",
+                        "name": "Продукт 2"
+                      }
+                    ],
+                    "subSections": [
+                      {
+                        "id": "201",
+                        "name": "Підсекція 1"
+                      }
+                    ]
+                  },
+                  "currentPage": 1,
+                  "totalPages": 5
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Секція не знайдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Section not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/subsections": {
+      "get": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Вивід підкатегорій",
+        "description": "Цей запит дозволяє отримати всі підсекції з пагінацією або конкретну підсекцію за ID. Можливе отримання продуктів, пов'язаних з підсекцією, разом із відгуками на них.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID підсекції для отримання конкретної підсекції",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь із списком підсекцій або конкретною підсекцією",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subSections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "subsection": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "subSection": [
+                    {
+                      "id": "1",
+                      "name": "Підсекція 1"
+                    },
+                    {
+                      "id": "2",
+                      "name": "Підсекція 2"
+                    }
+                  ],
+                  "subsection": {
+                    "id": "1",
+                    "name": "Підсекція 1",
+                    "products": [
+                      {
+                        "id": "101",
+                        "name": "Продукт 1"
+                      },
+                      {
+                        "id": "102",
+                        "name": "Продукт 2"
+                      }
+                    ]
+                  },
+                  "currentPage": 1,
+                  "totalPages": 5
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Підсекція не знайдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "SubSection not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Вивід постів",
+        "description": "Цей запит дозволяє отримати всі блог-пости з пагінацією або конкретний блог-пост за ID. Можливе фільтрування постів, які повинні відображатися.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID блог-посту для отримання конкретного посту",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішна відповідь зі списком постів або конкретним постом",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "image": {
+                            "type": "string"
+                          },
+                          "video": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "post": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "publicationDate": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "example": {
+                  "posts": [
+                    {
+                      "id": "1",
+                      "title": "Post 1",
+                      "content": "Content of post 1",
+                      "author": "Author 1"
+                    },
+                    {
+                      "id": "2",
+                      "title": "Post 2",
+                      "content": "Content of post 2",
+                      "author": "Author 2"
+                    }
+                  ],
+                  "post": {
+                    "id": "1",
+                    "title": "Post 1",
+                    "content": "Content of post 1",
+                    "author": "Author 1",
+                    "publicationDate": "2024-09-11T10:00:00Z"
+                  },
+                  "currentPage": 1,
+                  "totalPages": 5
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пост не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Post not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/order": {
+      "post": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Створити нове замовлення",
+        "description": "Цей запит дозволяє створити нове замовлення з наданими деталями. Після створення замовлення оновлюються історія користувача та кількість товарів на складі.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "localStorage": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "goodsId": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  },
+                  "cost": {
+                    "type": "number"
+                  },
+                  "fullname": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "deliveryType": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "customerComment": {
+                    "type": "string"
+                  },
+                  "managerComment": {
+                    "type": "string"
+                  },
+                  "invoiceId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "localStorage",
+                  "cost",
+                  "fullname",
+                  "phone",
+                  "deliveryType",
+                  "city",
+                  "address"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Замовлення успішно створене",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "order": {
+                      "type": "object",
+                      "properties": {
+                        "orderNumber": {
+                          "type": "string"
+                        },
+                        "localStorage": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "goodsId": {
+                                "type": "string"
+                              },
+                              "quantity": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "cost": {
+                          "type": "number"
+                        },
+                        "fullname": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "deliveryType": {
+                          "type": "string"
+                        },
+                        "city": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "type": "string"
+                        },
+                        "customerComment": {
+                          "type": "string"
+                        },
+                        "managerComment": {
+                          "type": "string"
+                        },
+                        "invoiceId": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Order Successfully created",
+                  "order": {
+                    "orderNumber": "ORD123456",
+                    "localStorage": [
+                      {
+                        "productId": "prod1",
+                        "quantity": 2
+                      },
+                      {
+                        "productId": "prod2",
+                        "quantity": 1
+                      }
+                    ],
+                    "cost": 400.00,
+                    "fullname": "John Doe",
+                    "phone": "+1234567890",
+                    "deliveryType": "Standard",
+                    "city": "New York",
+                    "address": "123 Main St",
+                    "customerComment": "Please deliver after 5 PM.",
+                    "managerComment": "Urgent delivery",
+                    "invoiceId": "inv123456",
+                    "createdAt": "2024-09-11T10:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/calls": {
+      "put": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Залишити номер телефону",
+        "description": "Цей запит дозволяє додати новий запис про дзвінок до бази даних адміністратора. Для цього потрібно надати номер телефону та текст повідомлення.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "phone"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Запис про дзвінок успішно додано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "We will call you"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неправильний номер телефону",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Send correct phone number"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

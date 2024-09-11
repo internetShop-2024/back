@@ -13,8 +13,7 @@ const adminSchema = new mongoose.Schema({
     calls: [{
         callPhone: {
             type: String,
-            required: true,
-            unique: true
+            required: true
         },
         createdAt: {
             type: Date,

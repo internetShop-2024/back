@@ -5,6 +5,8 @@ const Order = require("../models/orderModel")
 const Product = require("../models/productModel")
 const Review = require("../models/reviewModel")
 
+const {perPage} = require("../vars/publicVars")
+
 const {passwordHash, tokenAssign, convertToArray} = require("../vars/functions");
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
@@ -35,9 +37,11 @@ userRouter.get('/history', authValidator, async (req, res) => {
 userRouter.get("/favorite", authValidator, async (req, res) => {
     try {
         const user = req.user
-
-        user.favorite = await Product.find({_id: {$in: user.favorite}}).lean()
-        return res.status(200).json({favorite: user.favorite})
+        const favorite = await Product.find({_id: {$in: user.favorite}}).lean()
+        if (!favorite.length) {
+            return res.status(404).json({message: "No favorite found"})
+        }
+        return res.status(200).json({favorite: favorite})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -176,9 +180,11 @@ userRouter.put('/profile', authValidator, async (req, res) => {
     const userId = req.user._id
     try {
         const user = await User.findById(userId)
+            .select("-__v -password")
+            .lean()
         const {JWT, RT} = tokenAssign(user)
         user.refreshToken = RT
-        res.cookie('refreshToken', RT, {httpOnly: true, secure: true})
+        res.header('refreshToken', RT)
 
         if (phone) user.phone = phone
         if (city) user.city = city
@@ -186,7 +192,6 @@ userRouter.put('/profile', authValidator, async (req, res) => {
 
         await user.save()
 
-        const {password, refreshToken, ...updatedUser} = user.toObject()
         return res.status(200).json({
             message: 'Profile updated successfully',
             user: updatedUser,

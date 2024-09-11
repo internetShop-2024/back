@@ -23,6 +23,7 @@ productRouter.get("/", async (req, res) => {
             const data = await filterSystem(newObject)
             const totalProducts = await Product.countDocuments()
             const products = await Product.find(data.payload)
+                .select("-__v -createdAt -history")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .sort(data.sortOptions)

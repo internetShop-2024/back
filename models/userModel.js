@@ -31,16 +31,16 @@ const userSchema = new mongoose.Schema({
     },
     favorite: {
         type: [mongoose.Schema.Types.ObjectId],
-        ref: "Favorite"
+        ref: "Product"
     },
     createdAt: {
         type: Date,
         default: Date.now()
     },
     refreshToken: String,
-    display: {
+    deleted: {
         type: Boolean,
-        default: true
+        default: false
     }
 })
 
