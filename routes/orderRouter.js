@@ -1,4 +1,5 @@
 const orderRouter = require('express').Router()
+
 const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Product = require("../models/productModel")
@@ -23,7 +24,6 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         managerComment,
         invoiceId
     } = req.body
-
     try {
         const orderNumber = generateOrderNumber()
         const order = new Order({

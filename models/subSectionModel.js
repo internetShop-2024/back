@@ -1,6 +1,7 @@
 const mongoose = require("mongoose")
 
 const subSectionSchema = new mongoose.Schema({
+    photo: String,
     name: {
         type: String,
         required: true,

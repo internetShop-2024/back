@@ -14,19 +14,20 @@ const authorizationValidator = require("../validators/loginValidator")
 
 userRouter.get("/profile", authValidator, async (req, res) => {
     try {
-        const {password, refreshToken, ...payload} = req.user
-        return res.status(200).json({user: payload, accessToken: req.token})
+        const user = await User.findById(req.userId).select("-__v -password -refreshToken").lean()
+        if (!user) return res.status(401).json({error: "Unauthorized"})
+        return res.status(200).json({user: user, accessToken: req.token})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
 userRouter.get('/history', authValidator, async (req, res) => {
-    const user = req.user
     try {
-        const orders = await Order.find({phone: user.phone, deleted: false}).lean()
-        if (!orders.length)
-            return res.status(404).json({error: "No orders found for this user"})
+        const user = await User.findById(req.userId).select("phone").lean()
+        const orders = await Order.find({phone: user.phone, deleted: false}).select("-__v").lean()
+
+        if (!orders.length) return res.status(404).json({error: "No orders found for this user"})
 
         return res.status(200).json({orders: orders})
     } catch (e) {
@@ -36,11 +37,11 @@ userRouter.get('/history', authValidator, async (req, res) => {
 
 userRouter.get("/favorite", authValidator, async (req, res) => {
     try {
-        const user = req.user
-        const favorite = await Product.find({_id: {$in: user.favorite}}).lean()
-        if (!favorite.length) {
-            return res.status(404).json({message: "No favorite found"})
-        }
+        const user = await User.findById(req.userId).select("favorite").lean()
+        const favorite = await Product.find({_id: {$in: user.favorite}}).select("-__v -history").lean()
+
+        if (!favorite.length) return res.status(404).json({message: "No favorite found"})
+
         return res.status(200).json({favorite: favorite})
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -68,10 +69,10 @@ userRouter.post("/register", registerValidator, async (req, res) => {
             history: ordersIds
         })
 
-        const {JWT, RT} = tokenAssign(user)
+        const {JWT, RT} = tokenAssign(user._id)
 
         user.refreshToken = RT
-        res.header('refreshToken', RT)
+        res.setHeader('refreshToken', RT)
 
         await user.save()
 
@@ -103,10 +104,10 @@ userRouter.post("/authorization", authorizationValidator, async (req, res) => {
 
         const user = req.user
 
-        const {JWT, RT: NRT} = tokenAssign(user)
+        const {JWT, RT: NRT} = tokenAssign(user._id)
 
         user.refreshToken = NRT
-        res.header('refreshToken', NRT)
+        res.setHeader('refreshToken', NRT)
 
         await user.save()
 
@@ -133,15 +134,16 @@ userRouter.post("/authorization", authorizationValidator, async (req, res) => {
 userRouter.post("/favorite", authValidator, async (req, res) => {
     const {goods} = req.body
     try {
-        if (goods.length > 0) {
-            await User.updateOne(
-                {_id: req.user._id},
-                {$push: {favorite: {$each: goods}}}
-            )
-            return res.status(201).json({message: "Successfully added"})
-        } else {
-            return res.status(404).json({error: "Goods not found"})
-        }
+        if (!goods.length) return res.status(404).json({error: "No Products Found"})
+
+        const products = await Product.find({_id: {$in: goods}}).select("_id").lean()
+        if (!products.length) return res.status(404).json({error: "No Products Found"})
+
+        await User.updateOne(
+            {_id: req.userId},
+            {$push: {favorite: {$each: goods}}}
+        )
+        return res.status(201).json({message: "Successfully added"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -152,7 +154,7 @@ userRouter.post("/review", authValidator, async (req, res) => {
     const {id} = req.query
     try {
         const review = new Review({
-            reviewSenderId: req.user._id,
+            reviewSenderId: req.userId,
             product: id,
             content: {text: text}
         })
@@ -177,14 +179,13 @@ userRouter.post("/review", authValidator, async (req, res) => {
 //PUT
 userRouter.put('/profile', authValidator, async (req, res) => {
     const {phone, city, address} = req.body
-    const userId = req.user._id
     try {
-        const user = await User.findById(userId)
+        const user = await User.findById(req.userId)
             .select("-__v -password")
-            .lean()
-        const {JWT, RT} = tokenAssign(user)
+        const {JWT, RT} = tokenAssign(user._id)
+
         user.refreshToken = RT
-        res.header('refreshToken', RT)
+        res.setHeader('refreshToken', RT)
 
         if (phone) user.phone = phone
         if (city) user.city = city
@@ -194,7 +195,7 @@ userRouter.put('/profile', authValidator, async (req, res) => {
 
         return res.status(200).json({
             message: 'Profile updated successfully',
-            user: updatedUser,
+            user: user.toObject(),
             accessToken: JWT
         })
     } catch (e) {
@@ -208,7 +209,7 @@ userRouter.delete("/favorite", authValidator, async (req, res) => {
     try {
         const ids = await convertToArray(id)
         await User.updateOne(
-            {_id: req.user._id},
+            {_id: req.userId},
             {$pull: {favorite: {$in: ids}}}
         )
         return res.status(201).json({message: "Deleted from favorite"})
@@ -218,14 +219,21 @@ userRouter.delete("/favorite", authValidator, async (req, res) => {
 })
 
 userRouter.delete("/orders", authValidator, async (req, res) => {
-    const user = req.user
-    const id = req.params.id
-    if (!id) {
-        await Order.updateMany({phone: user.phone}, {$set: {deleted: true}})
-        return res.status(201).json({message: "All Orders deleted"})
-    } else {
-        const ids = await convertToArray(id)
-        await Order.updateMany({id: {$in: ids}, phone: user.phone}, {$set: {deleted: true}})
+    const {id} = req.query
+    try {
+        const user = await User.findById(req.userId).select("phone").lean()
+        if (!id) {
+            await Order.updateMany({phone: user.phone}, {$set: {deleted: true}})
+            await User.updateOne({_id: user._id}, {$set: {history: null}})
+            return res.status(201).json({message: "All Orders deleted"})
+        } else {
+            const ids = await convertToArray(id)
+            await Order.updateMany({id: {$in: ids}, phone: user.phone}, {$set: {deleted: true}})
+            await User.updateOne({_id: user._id}, {$pull: {history: {$in: ids}}})
+            return res.status(201).json({message: "Orders deleted"})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
     }
 })
 module.exports = userRouter

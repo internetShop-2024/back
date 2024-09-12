@@ -12,6 +12,7 @@ const registerValidator = async (req, res, next) => {
     if (!validatePhone(req.body.phone))
         return res.status(400).json({error: "Invalid phone"})
 
+    res.setHeader('Access-Control-Expose-Headers', 'refreshToken')
     next()
 }
 

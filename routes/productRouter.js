@@ -10,7 +10,7 @@ productRouter.get("/", async (req, res) => {
     const page = parseInt(req.query.page) || 1
     const id = req.query.id
 
-    const allowedParams = ['price', 'rate', 'promotion']
+    const allowedParams = ['price', 'rate', 'promotion', 'sortBy', 'orderBy']
     const newObject = Object.fromEntries(
         Object.entries(req.query)
             .filter(([key, value]) => allowedParams.includes(key) && value !== undefined))
@@ -19,7 +19,6 @@ productRouter.get("/", async (req, res) => {
             if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined) {
                 throw new Error("You must provide only one of sectionId or subSectionId")
             }
-
             const data = await filterSystem(newObject)
             const totalProducts = await Product.countDocuments()
             const products = await Product.find(data.payload)

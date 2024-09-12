@@ -1509,6 +1509,183 @@
           }
         }
       },
+      "put": {
+        "summary": "Оновити замовлення",
+        "description": "Оновлює замовлення на основі переданих даних. Оновлюються лише ті поля, які були змінені.",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullname": {
+                    "type": "string",
+                    "description": "Повне ім'я клієнта. Повинно бути дійсним іменем."
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Номер телефону клієнта. Формат повинен відповідати валідації телефону."
+                  },
+                  "deliveryType": {
+                    "type": "string",
+                    "description": "Тип доставки. Можливі значення: 'NP', 'UKRP'"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "Місто доставки замовлення."
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Адреса доставки."
+                  },
+                  "managerComment": {
+                    "type": "string",
+                    "description": "Коментар менеджера до замовлення."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Статус замовлення. Можливі статуси: 'wait', 'inProcess', 'sent', 'delivered', 'canceled'."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "example": {
+                  "fullname": "Іван Іваненко Фіфі",
+                  "phone": "0501234567",
+                  "deliveryType": "кур'єр",
+                  "city": "Київ",
+                  "address": "3",
+                  "managerComment": "Уточнити дані перед доставкою",
+                  "status": "inProcess"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Ідентифікатор замовлення, яке необхідно оновити."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Замовлення успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Order updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Помилка валідації або не було виявлено змін",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Invalid phone number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Замовлення не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Order not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "components": {
+        "schemas": {
+          "Order": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "609d1b2f9e83f001d34567c9"
+              },
+              "fullname": {
+                "type": "string",
+                "example": "Іван Іваненко Фіфі"
+              },
+              "phone": {
+                "type": "string",
+                "example": "0501234567"
+              },
+              "deliveryType": {
+                "type": "string",
+                "example": "NP"
+              },
+              "city": {
+                "type": "string",
+                "example": "Київ"
+              },
+              "address": {
+                "type": "string",
+                "example": "5"
+              },
+              "managerComment": {
+                "type": "string",
+                "example": "Уточнимо дані перед доставкою"
+              },
+              "status": {
+                "type": "string",
+                "example": "inProcess"
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Admin"
@@ -2995,7 +3172,9 @@
         }
       },
       "delete": {
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "summary": "Видалення підсекцій",
         "description": "Цей ендпоінт дозволяє видаляти підсекції з бази даних. Можна видалити всі підсекції або лише вибрані, вказавши їх ID.",
         "parameters": [

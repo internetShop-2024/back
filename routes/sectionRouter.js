@@ -59,7 +59,7 @@ sectionRouter.get("/subsections", async (req, res) => {
                 return res.status(404).json({error: "SubSection not found"})
             }
 
-            const products = await Product.find({_id: {$in: subsection.products}}).lean()
+            const products = await Product.find({section: {$in: subsection._id}}).lean()
             subsection.products = await productReviews(products)
 
             return res.status(200).json({subsection: subsection})

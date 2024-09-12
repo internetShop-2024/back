@@ -10,6 +10,7 @@ const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 
 const adminValidator = require("../validators/adminValidator")
+const orderUpdateValidator = require("../validators/orderUpdateValidator")
 const productUpdateValidator = require("../validators/productUpdateValidator")
 
 const {perPage} = require("../vars/publicVars")
@@ -318,14 +319,14 @@ adminRouter.post("/sections", adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/subsections", adminValidator, async (req, res) => {
-    const {name, products} = req.body
+    const {photo, name, products} = req.body
     const {id} = req.query
     try {
         if (!id)
             return res.status(404).json({error: "Section not found"})
 
         const subSection = new SubSection({
-            name: name, products: products
+            photo: photo, name: name, products: products
         })
 
         const updated = await Section.updateOne(
@@ -412,6 +413,21 @@ adminRouter.put('/posts', adminValidator, async (req, res) => {
             return res.status(404).json({error: 'Post not found'})
         }
         return res.status(200).json({message: 'Post updated successfully', post: updatedPost})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.put("/orders", adminValidator, orderUpdateValidator, async (req, res) => {
+    try {
+        const order = req.order
+        const updatedFields = req.updatedFields
+
+        Object.assign(order, updatedFields)
+
+        await order.save()
+
+        return res.status(201).json({message: "Order updated successfully", order: order})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -550,10 +566,12 @@ adminRouter.delete("/sections", adminValidator, async (req, res) => {
     try {
         if (!id) {
             await Section.deleteMany()
+            await Product.updateMany({}, {$set: {section: null}})
             return res.status(201).json({message: "Deleted"})
         } else {
             const ids = await convertToArray(id)
             await Section.deleteMany({_id: {$in: ids}})
+            await Product.updateMany({section: {$in: ids}}, {$set: {section: null}})
         }
     } catch (e) {
         return res.status(500).json({error: e.message})

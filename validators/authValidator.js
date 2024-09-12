@@ -6,29 +6,22 @@ const authValidator = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.replace("Bearer ", "")
         if (!token) return res.status(401).json({error: 'Unauthorized'})
-
-        const refreshToken = req.headers.refreshtoken
         let user = await validateToken(token, "JWT")
         if (!user) {
+            const refreshToken = req.headers.refreshtoken?.replace("Bearer ", "")
             const decoded = await validateToken(refreshToken, "RT")
+            if (!decoded) return res.status(401).json({error: 'Unauthorized'})
+            user = await User.findById(decoded.id).lean("refreshToken")
 
-            user = await User.findById(decoded._id)
+            if (!user || user.refreshToken !== refreshToken) return res.status(401).json({error: 'Unauthorized'})
 
-            if (!user || user.refreshToken !== refreshToken) {
-                return res.status(401).json({error: 'Invalid refresh token'})
-            }
+            const {JWT} = await tokenAssign(user._id, false)
 
-            const {JWT, RT: NRT} = await tokenAssign(user)
-
-            user.refreshToken = NRT
-            await user.save()
-
-            res.setHeader('refreshToken', NRT)
             req.token = JWT
-            req.user = user.toObject()
+            req.userId = user._id
             next()
         }
-        req.user = user
+        req.userId = user.id
         next()
     } catch
         (e) {

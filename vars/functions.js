@@ -131,22 +131,11 @@ const productReviews = async (products) => {
 
 const productCategory = async (products) => {
     return await Promise.all(products.map(async (product) => {
-        let categorySchema = {
-            section: null,
-            subSection: null
+        let category = await Section.findById(product.section).select('name photo').lean()
+        if (!category) {
+            category = await SubSection.findById(product.section).select('name').lean()
         }
-        let category = await Section.findOne({id: product.section}).select('name photo').lean()
-        if (category) {
-            categorySchema.section = category
-        } else {
-            category = await SubSection.findOne({id: product.section}).select('name').lean()
-            if (category) {
-                categorySchema.section = await Section.findOne({subSections: category._id}).select('name photo').lean()
-                categorySchema.subSection = category
-            }
-        }
-        product.category = categorySchema;
-
+        product.section = category
         return product
     }))
 }
@@ -181,15 +170,14 @@ const validatePhone = (phone) => {
 }
 
 //TOKEN
-const tokenAssign = (data) => {
-    if (data instanceof mongoose.Document) {
-        data = data.toObject()
+const tokenAssign = (data, generateRT = true) => {
+    const JWT = jwt.sign({id: data}, secretJWT, {expiresIn: '24d'});
+    let RT;
+    if (generateRT) {
+        RT = jwt.sign({id: data}, secretRT, {expiresIn: '7d'});
     }
-    const {password, refreshToken, exp, ...payload} = data
-    const JWT = jwt.sign(payload, secretJWT, {expiresIn: '24d'})
-    const RT = jwt.sign({_id: payload._id}, secretRT, {expiresIn: '7d'})
-    return {JWT, RT}
-}
+    return generateRT ? {JWT, RT} : {JWT};
+};
 
 const adminTokenAssign = (data) => {
     if (data instanceof mongoose.Document) {
@@ -242,8 +230,8 @@ const quantityProducts = async (data) => {
 
     for (let i = 0; i < ids.length; i++) {
         const product = await Product.findById(ids[i])
-        if (!product) return res.status(404).json({error: "Product not found"})
-        if (product.quantity < quantities[i]) return res.status(400).json({error: `Not enough quantity for '${product.name}'`})
+        if (!product) throw new Error("No Product Found")
+        if (product.quantity < quantities[i]) throw new Error(`Not enough quantity for '${product.name}'`)
     }
 
     return ids.map((id, index) => ({
@@ -256,17 +244,17 @@ const quantityProducts = async (data) => {
 
 //SECTIONS
 const sectionProducts = async (section) => {
-    const products = await Product.find({_id: {$in: section.products}}).lean()
+    const products = await Product.find({section: {$in: section._id}}).lean()
     section.products = await productReviews(products)
     return section
 }
 
 const sectionSubSections = async (section) => {
-    const subSections = await SubSection.find({_id: {$in: section.subSections}}).lean()
+    const subSections = await SubSection.find({section: {$in: section._id}}).lean()
 
     await Promise.all(subSections.map(async subSection => {
         if (subSection.products.length > 0) {
-            const products = await Product.find({_id: {$in: subSection.products}}).lean()
+            const products = await Product.find({section: {$in: subSection._id}}).lean()
             subSection.products = await productReviews(products)
         }
     }))
