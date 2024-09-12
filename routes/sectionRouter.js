@@ -4,7 +4,7 @@ const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 const Product = require("../models/productModel")
 
-const {sectionProducts, sectionSubSections, productReviews, sectionPacks} = require("../vars/functions");
+const {sectionProducts, sectionSubSections, productReviews, sectionPacks, convertToArray} = require("../vars/functions");
 
 const {perPage} = require("../vars/publicVars");
 

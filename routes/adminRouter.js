@@ -384,6 +384,8 @@ adminRouter.post("/subsections", adminValidator, async (req, res) => {
             photo: photo, name: name, products: products, packs: packs
         })
 
+        await subSection.save()
+
         const updated = await Section.updateOne(
             {_id: id},
             {$push: {subSections: subSection._id}}
@@ -391,8 +393,6 @@ adminRouter.post("/subsections", adminValidator, async (req, res) => {
 
         if (updated.modifiedCount === 0)
             return res.status(400).json({error: "SubSection not created"})
-
-        await subSection.save()
 
         return res.status(201).json({
             message: "Successfully created", subSection: subSection

@@ -11,7 +11,7 @@ const productUpdateValidator = async (req, res, next) => {
 
         const fieldsToUpdate = [
             'name', 'photo', 'price', 'article', 'description',
-            'sectionId', 'subSectionId', 'quantity', 'display', 'video'
+            'section', 'quantity', 'display', 'video'
         ]
 
         fieldsToUpdate.forEach(field => {

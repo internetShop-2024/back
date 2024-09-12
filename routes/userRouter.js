@@ -23,26 +23,42 @@ userRouter.get("/profile", authValidator, async (req, res) => {
 })
 
 userRouter.get('/history', authValidator, async (req, res) => {
+    const page = parseInt(req.query.page) || 1
     try {
         const user = await User.findById(req.userId).select("phone").lean()
-        const orders = await Order.find({phone: user.phone, deleted: false}).select("-__v").lean()
+        const orders = await Order.find({phone: user.phone, deleted: false})
+            .select("-__v")
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean()
+        const totalOrders = await Order.countDocuments({phone: user.phone, deleted: false})
 
         if (!orders.length) return res.status(404).json({error: "No orders found for this user"})
 
-        return res.status(200).json({orders: orders})
+        return res.status(200).json({
+            orders: orders, currentPage: page, totalPages: Math.ceil(totalOrders / perPage)
+        })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
 userRouter.get("/favorite", authValidator, async (req, res) => {
+    const page = parseInt(req.query.page) || 1
     try {
         const user = await User.findById(req.userId).select("favorite").lean()
-        const favorite = await Product.find({_id: {$in: user.favorite}}).select("-__v -history").lean()
+        const favorite = await Product.find({_id: {$in: user.favorite}})
+            .select("-__v -history")
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean()
 
+        const totalFavorite = await Product.countDocuments({_id: {$in: user.favorite}})
         if (!favorite.length) return res.status(404).json({message: "No favorite found"})
 
-        return res.status(200).json({favorite: favorite})
+        return res.status(200).json({
+            favorite: favorite, currentPage: page, totalPages: Math.ceil(totalFavorite / perPage)
+        })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

@@ -141,9 +141,14 @@ const productReviews = async (products) => {
 
 const productCategory = async (products) => {
     return await Promise.all(products.map(async (product) => {
-        let category = await Section.findById(product.section).select('name photo').lean()
-        if (!category) {
-            category = await SubSection.findById(product.section).select('name').lean()
+        let category = {
+            section: null,
+            subSection: null
+        }
+        category.section = await Section.findById(product.section).select('name photo').lean()
+        if (!category.section) {
+            category.subSection = await SubSection.findById(product.section).select('name photo').lean()
+            category.section = await Section.findOne({subSections: category.subSection?._id}).select("name photo").lean()
         }
         product.section = category
         return product
@@ -254,17 +259,17 @@ const quantityProducts = async (data) => {
 
 //SECTIONS
 const sectionProducts = async (section) => {
-    const products = await Product.find({section: {$in: section._id}}).lean()
+    const products = await Product.find({section: section._id}).select("-__v -section").lean()
     section.products = await productReviews(products)
     return section
 }
 
 const sectionSubSections = async (section) => {
-    const subSections = await SubSection.find({section: {$in: section._id}}).lean()
+    const subSections = await SubSection.find({_id: {$in: section.subSections}}).select("-__v").lean()
 
     await Promise.all(subSections.map(async subSection => {
         if (subSection.products.length > 0) {
-            const products = await Product.find({section: {$in: subSection._id}}).lean()
+            const products = await Product.find({section: subSection._id}).select("-__v").lean()
             subSection.products = await productReviews(products)
         }
     }))
