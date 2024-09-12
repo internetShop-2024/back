@@ -3,14 +3,14 @@ const productRouter = require("express").Router()
 const Product = require("../models/productModel")
 
 const {productReviews, filterSystem, productCategory} = require("../vars/functions")
+const {perPage} = require("../vars/publicVars")
 
 //GET
 productRouter.get("/", async (req, res) => {
-    const perPage = 18
     const page = parseInt(req.query.page) || 1
     const id = req.query.id
 
-    const allowedParams = ['price', 'rate', 'promotion', 'sortBy', 'orderBy']
+    const allowedParams = ['price', 'rate', 'promotion', 'sectionId', 'subSectionId', 'sortBy', 'orderBy']
     const newObject = Object.fromEntries(
         Object.entries(req.query)
             .filter(([key, value]) => allowedParams.includes(key) && value !== undefined))
@@ -28,7 +28,7 @@ productRouter.get("/", async (req, res) => {
                 .sort(data.sortOptions)
                 .lean()
             if (!products.length)
-                return res.status(404).json({message: "Not Found"})
+                return res.status(404).json({message: "Products Not Found"})
 
             await productReviews(products)
             await productCategory(products)

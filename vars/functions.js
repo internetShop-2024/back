@@ -1,17 +1,27 @@
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
 const mongoose = require("mongoose")
+const {Parser} = require("json2csv")
 
 const {secretJWT, secretRT, secretAT} = require("./privateVars")
-const Review = require("../models/reviewModel");
+
+const Review = require("../models/reviewModel")
 const Product = require("../models/productModel")
-const SubSection = require("../models/subSectionModel");
-const User = require("../models/userModel");
-const {Parser} = require("json2csv");
-const Order = require("../models/orderModel");
-const Section = require("../models/sectionModel");
+const SubSection = require("../models/subSectionModel")
+const User = require("../models/userModel")
+const Order = require("../models/orderModel")
+const Section = require("../models/sectionModel")
+const Pack = require("../models/packModel")
 
 //ADMIN
+const chooseSection = async (sectionId, subSectionId) => {
+    return (sectionId !== undefined && subSectionId !== undefined)
+        ? (() => {
+            throw new Error('Both sectionId and subSectionId are defined');
+        })()
+        : (sectionId !== undefined ? sectionId : subSectionId);
+}
+
 const convertToArray = async (data) => {
     return data.split(',')
 }
@@ -262,9 +272,16 @@ const sectionSubSections = async (section) => {
     return section
 }
 
+const sectionPacks = async (section) => {
+    const packs = await Pack.find({_id: {$in: section.packs}}).select("-__v").lean()
+    if (!packs) throw new Error("Packs not found")
+    section.packs = packs
+    return section
+}
+
 module.exports = {
     //ADMINS
-    convertToArray, filterSystem, export2csvSystem,
+    convertToArray, filterSystem, export2csvSystem, chooseSection,
     //PRODUCTS
     productReviews, productCategory,
     //USERS
@@ -274,5 +291,7 @@ module.exports = {
     //ORDERS
     generateOrderNumber, orderProducts, quantityProducts,
     //SECTIONS
-    sectionProducts, sectionSubSections
+    sectionProducts, sectionSubSections,
+    //PACKS
+    sectionPacks,
 }

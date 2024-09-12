@@ -4,7 +4,7 @@ const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 const Product = require("../models/productModel")
 
-const {sectionProducts, sectionSubSections, productReviews} = require("../vars/functions");
+const {sectionProducts, sectionSubSections, productReviews, sectionPacks} = require("../vars/functions");
 
 const {perPage} = require("../vars/publicVars");
 
@@ -30,6 +30,9 @@ sectionRouter.get("/", async (req, res) => {
             }
             if (section.subSections?.length > 0) {
                 await sectionSubSections(section)
+            }
+            if (section.packs?.length > 0) {
+                await sectionPacks(section)
             }
             return res.status(200).json({section: section})
         }

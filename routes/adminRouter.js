@@ -8,10 +8,12 @@ const Blog = require("../models/blogModel")
 const Product = require("../models/productModel")
 const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
+const Pack = require("../models/packModel")
 
 const adminValidator = require("../validators/adminValidator")
 const orderUpdateValidator = require("../validators/orderUpdateValidator")
 const productUpdateValidator = require("../validators/productUpdateValidator")
+const packUpdateValidator = require("../validators/packUpdateValidator")
 
 const {perPage} = require("../vars/publicVars")
 
@@ -21,8 +23,10 @@ const {
     passwordCompare,
     convertToArray,
     filterSystem,
-    export2csvSystem, validatePhone, orderProducts, productReviews, productCategory
+    export2csvSystem, validatePhone, orderProducts, productReviews, productCategory, chooseSection
 } = require("../vars/functions")
+const mongoose = require("mongoose");
+
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -142,47 +146,76 @@ adminRouter.get('/orders', adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.get("/products", adminValidator, async (req, res) => {
-        const page = parseInt(req.query.page) || 1
-        const id = req.query.id
-
-        try {
-            if (!id) {
-                if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined) {
-                    throw new Error("You must provide only one of sectionId or subSectionId")
-                }
-
-                const data = await filterSystem(req.query)
-                const totalProducts = await Product.countDocuments()
-                const products = await Product.find(data.payload)
-                    .skip((page - 1) * perPage)
-                    .limit(perPage)
-                    .sort(data.sortOptions)
-                    .lean()
-
-                if (!products.length) return res.status(404).json({message: "Product Not Found"})
-
-                await productReviews(products)
-                await productCategory(products)
-
-                return res.status(200).json({
-                    products: products, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
-                })
-            } else {
-                const product = await Product.findOne({_id: id}).lean()
-                if (!product) return res.status(404).json({error: "Product not found"})
-                await productReviews([product])
-                await productCategory([product])
-                if (!product)
-                    return res.status(404).json({message: "Product not found"})
-
-                return res.status(200).json({product: product})
-            }
-        } catch (e) {
-            return res.status(500).json({error: e.message})
+adminRouter.get("/packs", adminValidator, async (req, res) => {
+    const page = parseInt(req.query.page) || 1
+    const {id} = req.query
+    try {
+        if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined) {
+            throw new Error("You must provide only one of sectionId or subSectionId")
         }
+        if (!id) {
+            const data = await filterSystem(req.query)
+            const totalPacks = await Pack.countDocuments()
+            const packs = await Pack.find(data.payload)
+                .select("-__v -createdAt")
+                .skip((page - 1) * perPage)
+                .limit(perPage)
+                .sort(data.sortOptions)
+                .lean()
+            if (!packs.length) return res.status(404).json({error: "No Packs Found"})
+            return res.status(200).json({
+                packs: packs, currentPage: page, totalPages: Math.ceil(totalPacks / perPage)
+            })
+        } else {
+            const pack = await Pack.findById(id)
+            if (!pack) return res.status(404).json({error: "No Pack Found"})
+            return res.status(200).json({pack: pack})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
     }
-)
+})
+
+adminRouter.get("/products", adminValidator, async (req, res) => {
+    const page = parseInt(req.query.page) || 1
+    const id = req.query.id
+
+    try {
+        if (!id) {
+            if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined) {
+                throw new Error("You must provide only one of sectionId or subSectionId")
+            }
+
+            const data = await filterSystem(req.query)
+            const totalProducts = await Product.countDocuments()
+            const products = await Product.find(data.payload)
+                .skip((page - 1) * perPage)
+                .limit(perPage)
+                .sort(data.sortOptions)
+                .lean()
+
+            if (!products.length) return res.status(404).json({message: "Product Not Found"})
+
+            await productReviews(products)
+            await productCategory(products)
+
+            return res.status(200).json({
+                products: products, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
+            })
+        } else {
+            const product = await Product.findOne({_id: id}).lean()
+            if (!product) return res.status(404).json({error: "Product not found"})
+            await productReviews([product])
+            await productCategory([product])
+            if (!product)
+                return res.status(404).json({message: "Product not found"})
+
+            return res.status(200).json({product: product})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
 
 //POST
 adminRouter.post("/create", async (req, res) => {
@@ -258,16 +291,39 @@ adminRouter.post('/posts', adminValidator, async (req, res) => {
     }
 })
 
+adminRouter.post("/packs", adminValidator, async (req, res) => {
+    const {photo, article, packName, price, sectionId, subSectionId, productsIds} = req.body
+    try {
+        if (productsIds && productsIds.length) {
+            const products = await Product.find({_id: {$in: productsIds}}).select("_id").lean()
+            if (!products) return res.status(404).json({error: "Products Not Found"})
+        }
+
+        const result = await chooseSection(sectionId, subSectionId)
+        const pack = new Pack({
+            photo: photo,
+            article: article,
+            packName: packName,
+            price: price,
+            section: result,
+            products: productsIds
+        })
+
+        await pack.save()
+        const updated = await Section.updateOne({_id: result}, {$push: {packs: pack}})
+        if (updated.modifiedCount < 1) await SubSection.updateOne({_id: result}, {$push: {packs: pack}})
+        return res.status(201).json({pack: pack})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
 adminRouter.post("/products", adminValidator, async (req, res) => {
     const {
         photo, name, price, article, description, sectionId, subSectionId, promotion, quantity, video
     } = req.body
     try {
-        const result = (sectionId !== undefined && subSectionId !== undefined)
-            ? (() => {
-                throw new Error('Both sectionId and subSectionId are defined');
-            })()
-            : (sectionId !== undefined ? sectionId : subSectionId);
+        const result = await chooseSection(sectionId, subSectionId)
 
         const product = new Product({
             photo: photo,
@@ -292,20 +348,19 @@ adminRouter.post("/products", adminValidator, async (req, res) => {
             message: "Successfully created", product: product
         })
     } catch (e) {
-        console.log(e)
-        return res.status(500).json({error: e})
+        return res.status(500).json({error: e.message})
     }
 })
 
 adminRouter.post("/sections", adminValidator, async (req, res) => {
-    const {photo, name, subSections, products} = req.body
+    const {photo, name, subSections, products, packs} = req.body
     try {
-        if (subSections?.length > 0) subSections.forEach(subSection => new ObjectId(subSection))
+        if (subSections?.length > 0) subSections.forEach(subSection => new mongoose.Types.ObjectId(subSection))
 
-        if (products?.length > 0) products.forEach(product => new ObjectId(product))
+        if (products?.length > 0) products.forEach(product => new mongoose.Types.ObjectId(product))
 
         const section = new Section({
-            photo: photo, name: name, subSections: subSections, products: products
+            photo: photo, name: name, subSections: subSections, products: products, packs: packs
         })
 
         await section.save()
@@ -319,14 +374,14 @@ adminRouter.post("/sections", adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/subsections", adminValidator, async (req, res) => {
-    const {photo, name, products} = req.body
+    const {photo, name, products, packs} = req.body
     const {id} = req.query
     try {
         if (!id)
             return res.status(404).json({error: "Section not found"})
 
         const subSection = new SubSection({
-            photo: photo, name: name, products: products
+            photo: photo, name: name, products: products, packs: packs
         })
 
         const updated = await Section.updateOne(
@@ -433,6 +488,45 @@ adminRouter.put("/orders", adminValidator, orderUpdateValidator, async (req, res
     }
 })
 
+adminRouter.put("/packs", adminValidator, packUpdateValidator, async (req, res) => {
+    try {
+        const {id} = req.query
+        const {sectionId, subSectionId} = req.body
+        const {updatedFields, pack} = req
+
+        if (sectionId && sectionId !== pack.section.toString()) {
+            const oldSection = pack.section
+            await Section.updateOne(
+                {_id: oldSection},
+                {$pull: {packs: pack._id}}
+            );
+            await SubSection.updateOne(
+                {_id: oldSection},
+                {$pull: {packs: pack._id}}
+            );
+        }
+        const updatedPack = await Pack.findByIdAndUpdate(id, updatedFields);
+        if (!updatedPack) return res.status(404).json({error: "Pack not found"});
+
+        const newSection = await chooseSection(sectionId, subSectionId)
+        if (newSection && newSection !== updatedPack.section) {
+            const sectionUpdate = await Section.updateOne(
+                {_id: newSection},
+                {$addToSet: {packs: updatedPack._id}}
+            );
+            if (sectionUpdate.modifiedCount < 1) {
+                await SubSection.updateOne(
+                    {_id: newSection},
+                    {$addToSet: {packs: updatedPack._id}}
+                );
+            }
+        }
+        return res.status(200).json({pack: updatedPack});
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
 adminRouter.put("/products", adminValidator, productUpdateValidator, async (req, res) => {
     try {
         const {history, ...payload} = req.product
@@ -490,6 +584,24 @@ adminRouter.delete("/users", adminValidator, async (req, res) => {
     }
 })
 
+adminRouter.delete("/orders", adminValidator, async (req, res) => {
+    const {id} = req.body
+    try {
+        if (!id) {
+            await Order.deleteMany()
+            await User.updateMany({}, {$pull: {history: {$in: []}}})
+            return res.status(201).json({message: "All orders deleted"})
+        } else {
+            const ids = await convertToArray(id)
+            await Order.deleteMany({_id: {$in: ids}})
+            await User.updateMany({}, {$pull: {history: {$in: ids}}})
+            return res.status(201).json({message: "Order deleted"})
+        }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
 adminRouter.delete('/posts', adminValidator, async (req, res) => {
     const {id} = req.query
     try {
@@ -506,18 +618,20 @@ adminRouter.delete('/posts', adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.delete("/orders", adminValidator, async (req, res) => {
-    const {id} = req.body
+adminRouter.delete('/packs', adminValidator, async (req, res) => {
+    const {id} = req.query
     try {
         if (!id) {
-            await Order.deleteMany()
-            await User.updateMany({}, {$pull: {history: {$in: []}}})
-            return res.status(201).json({message: "All orders deleted"})
+            await Pack.deleteMany()
+            await Section.updateMany({}, {$set: {packs: []}})
+            await SubSection.updateMany({}, {$set: {packs: []}})
+            return res.status(201).json({message: 'All Packs Deleted'})
         } else {
             const ids = await convertToArray(id)
-            await Order.deleteMany({_id: {$in: ids}})
-            await User.updateMany({}, {$pull: {history: {$in: ids}}})
-            return res.status(201).json({message: "Order deleted"})
+            await Pack.deleteMany({_id: {$in: ids}})
+            await Section.updateMany({packs: {$in: ids}}, {$pull: {packs: {$in: ids}}})
+            await SubSection.updateMany({packs: {$in: ids}}, {$pull: {packs: {$in: ids}}})
+            return res.status(201).json({message: 'Packs Deleted Successfully'})
         }
     } catch (e) {
         return res.status(500).json({error: e.message})

@@ -18,6 +18,10 @@ const sectionSchema = new mongoose.Schema({
         type: [mongoose.Schema.Types.ObjectId],
         ref: "Product"
     },
+    packs: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "Pack"
+    },
     createdAt: {
         type: Date,
         default: Date.now()

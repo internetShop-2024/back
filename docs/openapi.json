@@ -34,6 +34,713 @@
     }
   ],
   "paths": {
+    "/admin/packs": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Отримати інформацію про Тони",
+        "description": "Цей ендпоінт дозволяє адміністраторам отримати інформацію про пакети. Підтримує запити за ID пакету або фільтрацію на основі параметрів запиту. Можна вказати `sectionId` або `subSectionId`, але не обидва.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID пакету для отримання конкретного пакету. Якщо не вказано, повертає всі пакети.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "sectionId",
+            "in": "query",
+            "description": "ID секції для фільтрації пакетів. Можна вказати або `sectionId`, або `subSectionId`, але не обидва.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "subSectionId",
+            "in": "query",
+            "description": "ID підсекції для фільтрації пакетів. Можна вказати або `sectionId`, або `subSectionId`, але не обидва.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації. За замовчуванням 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Пакети успішно отримані",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "packs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "packName": {
+                            "type": "string",
+                            "description": "Назва пакету."
+                          },
+                          "photo": {
+                            "type": "string",
+                            "description": "URL фото пакету."
+                          },
+                          "article": {
+                            "type": "string",
+                            "description": "Артикул пакету."
+                          },
+                          "price": {
+                            "type": "number",
+                            "format": "float",
+                            "description": "Ціна пакету."
+                          },
+                          "section": {
+                            "type": "string",
+                            "description": "ID секції, до якої відноситься пакет."
+                          },
+                          "products": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "objectId",
+                              "description": "ID продуктів, які входять до пакету."
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Дата створення пакету."
+                          }
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Номер поточної сторінки."
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "description": "Загальна кількість сторінок."
+                    }
+                  },
+                  "required": [
+                    "packs",
+                    "currentPage",
+                    "totalPages"
+                  ]
+                },
+                "example": {
+                  "packs": [
+                    {
+                      "_id": "603c6b2f7f2e1b001f64792c",
+                      "packName": "Пакет А",
+                      "photo": "http://example.com/photo.jpg",
+                      "article": "12345",
+                      "price": 100.0,
+                      "section": "603c6b2f7f2e1b001f64792d",
+                      "products": [
+                        "603c6b2f7f2e1b001f64792e"
+                      ],
+                      "createdAt": "2024-09-12T12:34:56Z"
+                    }
+                  ],
+                  "currentPage": 1,
+                  "totalPages": 10
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пакети не знайдені",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Пакети не знайдені"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Внутрішня помилка сервера"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Створити новий Тон",
+        "description": "Цей ендпоінт дозволяє адміністраторам створювати новий пакет. Пакет може бути асоційований з секцією або підсекцією, а також включати продукти.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "description": "URL фото пакету."
+                  },
+                  "article": {
+                    "type": "string",
+                    "description": "Артикул пакету."
+                  },
+                  "packName": {
+                    "type": "string",
+                    "description": "Назва пакету.",
+                    "example": "Пакет А"
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Ціна пакету.",
+                    "example": 100.0
+                  },
+                  "sectionId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "description": "ID секції для асоціації пакету. Вимагайте або `sectionId`, або `subSectionId`, але не обидва."
+                  },
+                  "subSectionId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "description": "ID підсекції для асоціації пакету. Вимагайте або `sectionId`, або `subSectionId`, але не обидва."
+                  },
+                  "productsIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "objectId",
+                      "description": "ID продуктів, які входять до пакету."
+                    },
+                    "description": "Масив ID продуктів, що входять до пакету."
+                  }
+                },
+                "required": [
+                  "packName",
+                  "price"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пакет успішно створено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pack": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                          "description": "ID створеного пакету."
+                        },
+                        "photo": {
+                          "type": "string",
+                          "description": "URL фото пакету."
+                        },
+                        "article": {
+                          "type": "string",
+                          "description": "Артикул пакету."
+                        },
+                        "packName": {
+                          "type": "string",
+                          "description": "Назва пакету."
+                        },
+                        "price": {
+                          "type": "number",
+                          "format": "float",
+                          "description": "Ціна пакету."
+                        },
+                        "section": {
+                          "type": "string",
+                          "description": "ID секції, до якої відноситься пакет."
+                        },
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "objectId",
+                            "description": "ID продуктів, що входять до пакету."
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Дата створення пакету."
+                        }
+                      },
+                      "required": [
+                        "_id",
+                        "packName",
+                        "price",
+                        "section",
+                        "products",
+                        "createdAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pack"
+                  ]
+                },
+                "example": {
+                  "pack": {
+                    "_id": "603c6b2f7f2e1b001f64792c",
+                    "photo": "http://example.com/photo.jpg",
+                    "article": "12345",
+                    "packName": "Пакет А",
+                    "price": 100.0,
+                    "section": "603c6b2f7f2e1b001f64792d",
+                    "products": [
+                      "603c6b2f7f2e1b001f64792e"
+                    ],
+                    "createdAt": "2024-09-12T12:34:56Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некоректні дані запиту",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Некоректні дані запиту"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Продукти не знайдені або секція/підсекція не знайдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Продукти не знайдені"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Внутрішня помилка сервера"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Оновити існуючий Тон",
+        "description": "Цей ендпоінт дозволяє адміністраторам оновлювати існуючий пакет. Якщо вказано нову секцію або підсекцію, пакет буде переміщено з старої секції/підсекції до нової.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID пакету, який потрібно оновити.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "description": "URL фото пакету."
+                  },
+                  "article": {
+                    "type": "string",
+                    "description": "Артикул пакету."
+                  },
+                  "packName": {
+                    "type": "string",
+                    "description": "Назва пакету."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Ціна пакету."
+                  },
+                  "sectionId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "description": "ID нової секції для асоціації пакету. Якщо вказано, пакет буде переміщено до нової секції."
+                  },
+                  "subSectionId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "description": "ID нової підсекції для асоціації пакету. Якщо вказано, пакет буде переміщено до нової підсекції."
+                  },
+                  "productsIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "objectId",
+                      "description": "ID продуктів, які входять до пакету."
+                    },
+                    "description": "Масив ID продуктів, що входять до пакету."
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Пакет успішно оновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pack": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                          "description": "ID оновленого пакету."
+                        },
+                        "photo": {
+                          "type": "string",
+                          "description": "URL фото пакету."
+                        },
+                        "article": {
+                          "type": "string",
+                          "description": "Артикул пакету."
+                        },
+                        "packName": {
+                          "type": "string",
+                          "description": "Назва пакету."
+                        },
+                        "price": {
+                          "type": "number",
+                          "format": "float",
+                          "description": "Ціна пакету."
+                        },
+                        "section": {
+                          "type": "string",
+                          "description": "ID секції, до якої відноситься пакет."
+                        },
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "objectId",
+                            "description": "ID продуктів, що входять до пакету."
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Дата створення пакету."
+                        }
+                      },
+                      "required": [
+                        "_id",
+                        "packName",
+                        "price",
+                        "section",
+                        "products",
+                        "createdAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pack"
+                  ]
+                },
+                "example": {
+                  "pack": {
+                    "_id": "603c6b2f7f2e1b001f64792c",
+                    "photo": "http://example.com/photo.jpg",
+                    "article": "12345",
+                    "packName": "Оновлений Пакет",
+                    "price": 120.0,
+                    "section": "603c6b2f7f2e1b001f64792d",
+                    "products": [
+                      "603c6b2f7f2e1b001f64792e"
+                    ],
+                    "createdAt": "2024-09-12T12:34:56Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некоректні дані запиту або немає змін",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Некоректні дані запиту або немає змін"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пакет або секція/підсекція не знайдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Пакет не знайдено"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Внутрішня помилка сервера"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Видалити Тони",
+        "description": "Цей ендпоінт дозволяє адміністраторам видаляти пакети з бази даних. Можна видалити всі пакети або лише вибрані, вказавши їх ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID пакетів для видалення. Якщо не вказано, видаляються всі пакети.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "description": "ID одного або кількох пакетів для видалення. Може бути один ID або масив ID."
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Пакети успішно видалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Повідомлення про успішне видалення.",
+                      "example": "Packs Deleted Successfully"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Packs Deleted Successfully"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пакети не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "No packs found with the provided IDs"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "No packs found with the provided IDs"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Internal server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/users": {
       "get": {
         "summary": "Отримати інформацію про користувачів",
@@ -5419,6 +6126,225 @@
                       "type": "string"
                     }
                   }
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/packs": {
+      "get": {
+        "tags": [
+          "Anon"
+        ],
+        "summary": "Отримати Тони",
+        "description": "Цей ендпоінт дозволяє отримувати інформацію про пакети. Можна отримати всі пакети з можливістю фільтрації, пагінації та сортування або отримати конкретний пакет за його ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID пакета, який потрібно отримати. Якщо вказано, повертає конкретний пакет.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Номер сторінки для пагінації. Значення за замовчуванням - 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "description": "Фільтрація по ціні.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "sectionId",
+            "in": "query",
+            "description": "Фільтрація по ID секції. Може бути вказано або `sectionId`, або `subSectionId`, але не обидва.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "subSectionId",
+            "in": "query",
+            "description": "Фільтрація по ID підсекції. Може бути вказано або `sectionId`, або `subSectionId`, але не обидва.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Поле для сортування.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "description": "Напрямок сортування. Може бути 'asc' або 'desc'.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успішно отримано інформацію про пакети",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "packs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string"
+                          },
+                          "photo": {
+                            "type": "string"
+                          },
+                          "article": {
+                            "type": "string"
+                          },
+                          "packName": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number",
+                            "format": "float"
+                          },
+                          "section": {
+                            "type": "string",
+                            "format": "objectId"
+                          },
+                          "products": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "objectId"
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "currentPage": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "totalPages": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  },
+                  "required": [
+                    "packs",
+                    "currentPage",
+                    "totalPages"
+                  ]
+                },
+                "example": {
+                  "packs": [
+                    {
+                      "_id": "603c6b2f7f2e1b001f64792c",
+                      "photo": "http://example.com/photo.jpg",
+                      "article": "12345",
+                      "packName": "Sample Pack",
+                      "price": 29.99,
+                      "section": "603c6b2f7f2e1b001f64792a",
+                      "products": [
+                        "603c6b2f7f2e1b001f64792b"
+                      ],
+                      "createdAt": "2024-01-01T00:00:00Z"
+                    }
+                  ],
+                  "currentPage": 1,
+                  "totalPages": 10
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пакети не знайдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "No Packs Found"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                },
+                "example": {
+                  "error": "No Packs Found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Внутрішня помилка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Опис помилки",
+                      "example": "Internal server error"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
                 },
                 "example": {
                   "error": "Internal server error"

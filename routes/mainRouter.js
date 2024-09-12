@@ -5,6 +5,7 @@ const userRouter = require("../routes/userRouter")
 const orderRouter = require("../routes/orderRouter")
 const blogRouter = require("../routes/blogRouter")
 const adminRouter = require("../routes/adminRouter")
+const packRouter = require("../routes/packRouter")
 const docRouter = require("../docs/docRouter")
 
 router.get("/", async (req, res) => {
@@ -12,6 +13,7 @@ router.get("/", async (req, res) => {
 })
 
 router.use("/products", productRouter)
+router.use("/packs", packRouter)
 router.use("/catalog", sectionRouter)
 router.use("/users", userRouter)
 router.use("/orders", orderRouter)
