@@ -1,25 +1,30 @@
 const crypto = require('crypto')
-const {monoXSIGN} = require("../vars/privateVars")
+const {monoXSIGN, monoPEM} = require("../vars/privateVars")
 
 const monobankValidator = async (req, res, next) => {
-    const publicKeyBuf = Buffer.from(monoXSIGN, 'base64')
+    try {
+        let publicKeyBuf = Buffer.from(monoPEM, 'base64')
 
-    const xSignBase64 = req.headers['x-sign']
-    if (!xSignBase64) return res.status(403).json({message: "Invalid signature"})
-    const signatureBuf = Buffer.from(xSignBase64, 'base64')
-    console.log(publicKeyBuf)
-    console.log(signatureBuf)
+        let xSignBase64 = req.headers['x-sign']
+        if (!xSignBase64) return res.status(403).json({message: "Invalid signature"})
 
-    const algorithm = 'SHA256'
-    const message = JSON.stringify(req.body)
+        let signatureBuf = Buffer.from(xSignBase64, 'base64')
 
-    const isValid =  crypto.verify(algorithm, message, publicKeyBuf, signatureBuf)
+        let verify = crypto.createVerify("SHA256")
 
-    if (!isValid) {
-        return res.status(403).json({message: "Invalid signature"})
+        const bodyData = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body
+
+        verify.write(bodyData)
+        verify.end()
+
+        let result = verify.verify(publicKeyBuf, signatureBuf)
+
+        if (!result) return res.status(403).json({message: "Invalid signature"})
+
+        next()
+    } catch (e) {
+        return res.status(400).json({error: e.message})
     }
-
-    next()
 }
 
 module.exports = monobankValidator

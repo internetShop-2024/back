@@ -26,6 +26,7 @@ userRouter.get('/history', authValidator, async (req, res) => {
     const page = parseInt(req.query.page) || 1
     try {
         const user = await User.findById(req.userId).select("phone").lean()
+        if (!user) return res.status(401).json({error: "Unauthorized"})
         const orders = await Order.find({phone: user.phone, deleted: false})
             .select("-__v")
             .skip((page - 1) * perPage)
@@ -47,6 +48,7 @@ userRouter.get("/favorite", authValidator, async (req, res) => {
     const page = parseInt(req.query.page) || 1
     try {
         const user = await User.findById(req.userId).select("favorite").lean()
+        if (!user) return res.status(401).json({error: "Unauthorized"})
         const favorite = await Product.find({_id: {$in: user.favorite}})
             .select("-__v -history")
             .skip((page - 1) * perPage)
@@ -240,7 +242,7 @@ userRouter.delete("/orders", authValidator, async (req, res) => {
         const user = await User.findById(req.userId).select("phone").lean()
         if (!id) {
             await Order.updateMany({phone: user.phone}, {$set: {deleted: true}})
-            await User.updateOne({_id: user._id}, {$set: {history: null}})
+            await User.updateOne({_id: user._id}, {$set: {history: []}})
             return res.status(201).json({message: "All Orders deleted"})
         } else {
             const ids = await convertToArray(id)

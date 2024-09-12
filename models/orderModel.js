@@ -61,10 +61,9 @@ const orderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now()
     },
-})
+});
 
 orderSchema.path('localStorage').schema.set("_id", false)
+const Order = mongoose.model("Order", orderSchema);
 
-const Order = mongoose.model("Order", orderSchema)
-
-module.exports = Order
+module.exports = Order;

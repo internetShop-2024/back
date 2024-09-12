@@ -7,8 +7,10 @@ const Product = require("../models/productModel")
 const {generateOrderNumber, convertToArray, quantityProducts} = require("../vars/functions")
 
 const orderValidator = require("../validators/orderValidator")
+const monobankValidator = require("../validators/monobankValidator")
 
-const {monoXSIGN} = require("../vars/privateVars")
+const {monoXSIGN, mongoUri, monoURL} = require("../vars/privateVars")
+const axios = require("axios");
 
 //POST
 orderRouter.post("/order", orderValidator, async (req, res) => {
@@ -59,12 +61,34 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
     }
 })
 
-orderRouter.post("/pay-status", async (req, res) => {
-    const {invoiceId, status} = req.body;
+orderRouter.post("/pay-status", monobankValidator, async (req, res) => {
+    const {invoiceId} = req.body;
     try {
-        if (status === "success") await Order.updateOne({invoiceId: invoiceId}, {payment: true, status: "inProcess"})
-        return res.status(200).header("X-Sign", monoXSIGN)
-    } catch (e) {
+        await axios.get(
+            `${monoURL}/invoice/status`,
+            {
+                headers: {
+                    "X-Token": monoXSIGN
+                },
+                params: {invoiceId}
+            }
+        ).then(async response => {
+            if (response.data.status === "expired") {
+                await Order.updateOne({invoiceId: invoiceId}, {status: "cancelled"})
+                return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
+            } else if (response.data.status === "success") {
+                await Order.updateOne({invoiceId: invoiceId}, {
+                    payment: true,
+                    status: "inProcess"
+                })
+                return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
+            }
+        }).catch(e => {
+            console.error(e.data)
+        })
+        return res.status(400)
+    } catch
+        (e) {
         return res.status(500)
     }
 })
