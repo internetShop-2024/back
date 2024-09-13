@@ -19,6 +19,8 @@ const monobankValidator = async (req, res, next) => {
 
         let result = verify.verify(publicKeyBuf, signatureBuf)
 
+        console.log(result === true ? "OK" : "NOT OK")
+
         if (!result) return res.status(403).json({message: "Invalid signature"})
 
         next()
