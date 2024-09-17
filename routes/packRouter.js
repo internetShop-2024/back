@@ -20,9 +20,9 @@ packRouter.get("/", async (req, res) => {
         }
         if (!id) {
             const data = await filterSystem(newObject)
+            data.payload['display'] = true
             const totalPacks = await Pack.countDocuments()
             const packs = await Pack.find(data.payload)
-                .select("-__v -createdAt")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .sort(data.sortOptions)

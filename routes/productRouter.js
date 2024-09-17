@@ -20,9 +20,10 @@ productRouter.get("/", async (req, res) => {
                 throw new Error("You must provide only one of sectionId or subSectionId")
             }
             const data = await filterSystem(newObject)
+            data.payload["display"] = true
             const totalProducts = await Product.countDocuments()
             const products = await Product.find(data.payload)
-                .select("-__v -createdAt -history")
+                .select("-history")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .sort(data.sortOptions)

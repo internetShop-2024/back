@@ -1,9 +1,10 @@
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
 const mongoose = require("mongoose")
+const axios = require("axios");
 const {Parser} = require("json2csv")
 
-const {secretJWT, secretRT, secretAT} = require("./privateVars")
+const {secretJWT, secretRT, secretAT, monoURL, monoWEBHOOK, monoXSIGN} = require("./privateVars")
 
 const Review = require("../models/reviewModel")
 const Product = require("../models/productModel")
@@ -257,6 +258,29 @@ const quantityProducts = async (data) => {
     }))
 }
 
+const createInvoice = async (cost) => {
+    try {
+        const res = await axios.post(
+            `${monoURL}/invoice/create`,
+            {
+                amount: cost,
+                webHookUrl: monoWEBHOOK
+            },
+            {
+                headers: {
+                    'X-Token': monoXSIGN
+                }
+            }
+        )
+
+        const {invoiceId, pageUrl} = res.data
+        return {invoiceId, pageUrl}
+    } catch (e) {
+        throw new Error(e)
+    }
+}
+
+
 //SECTIONS
 const sectionProducts = async (section) => {
     const products = await Product.find({section: section._id}).select("-__v -section").lean()
@@ -264,17 +288,29 @@ const sectionProducts = async (section) => {
     return section
 }
 
-const sectionSubSections = async (section) => {
-    const subSections = await SubSection.find({_id: {$in: section.subSections}}).select("-__v").lean()
-
-    await Promise.all(subSections.map(async subSection => {
-        if (subSection.products.length > 0) {
-            const products = await Product.find({section: subSection._id}).select("-__v").lean()
-            subSection.products = await productReviews(products)
+const sectionSubSections = async (data) => {
+    try {
+        if (!data.length) {
+            const subSections = await SubSection.find({_id: {$in: data.subSections}}).select("-__v").lean()
+            await Promise.all(subSections.map(async subSection => {
+                if (subSection.products.length > 0) {
+                    const products = await Product.find({section: subSection._id}).select("-__v").lean()
+                    subSection.products = await productReviews(products)
+                }
+            }))
+            data.subSections = subSections
+            return data
+        } else {
+            await Promise.all(data.map(async section => {
+                section.subSections = await SubSection
+                    .find({_id: {$in: section.subSections}})
+                    .select("name")
+                    .lean()
+            }))
         }
-    }))
-    section.subSections = subSections
-    return section
+    } catch (e) {
+        throw new Error(e)
+    }
 }
 
 const sectionPacks = async (section) => {
@@ -294,7 +330,7 @@ module.exports = {
     //TOKEN
     tokenAssign, validateToken, adminTokenAssign,
     //ORDERS
-    generateOrderNumber, orderProducts, quantityProducts,
+    generateOrderNumber, orderProducts, quantityProducts, createInvoice,
     //SECTIONS
     sectionProducts, sectionSubSections,
     //PACKS

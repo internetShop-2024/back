@@ -19,6 +19,7 @@ sectionRouter.get("/", async (req, res) => {
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .lean()
+            await sectionSubSections(sections)
             return res.status(200).json({
                 sections: sections, currentPage: page, totalPages: Math.ceil(totalSections / perPage)
             })

@@ -1,54 +1,24 @@
-const {Storage} = require('@google-cloud/storage');
-const Multer = require('multer');
-const {format} = require('util')
-const path = require("path");
+const multer = require("multer")
 
-const storage = new Storage({
-    projectId: 'copper-tempo-429108-h9',
-    keyFilename: 'copper-tempo-429108-h9-30c2d356394d.json'
-});
+const storage = multer.memoryStorage()
 
-const bucket = storage.bucket('copper-tempo-429108-h9.appspot.com');
-
-const multer = Multer({
-    storage: Multer.memoryStorage(),
-});
-
-const uploadImageToGCS = (file) => {
-    return new Promise((resolve, reject) => {
-        if (!file) {
-            reject('No file uploaded');
-        }
-
-        const blob = bucket.file(file.originalname);
-        const blobStream = blob.createWriteStream({
-            resumable: false,
-        });
-
-        blobStream.on('error', (err) => {
-            reject(err);
-        });
-
-        blobStream.on('finish', () => {
-            const publicUrl = format(`https://storage.googleapis.com/${bucket.name}/${blob.name}`);
-            resolve(publicUrl);
-        });
-
-        blobStream.end(file.buffer);
-    });
-};
-
-const testBucketConnection = async () => {
+const filter = (req, file, cb) => {
     try {
-        const [files] = await bucket.getFiles();
-        return files;
-    } catch (error) {
-        console.log('Failed to connect to bucket: ' + error.message)
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg"]
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true)
+        } else {
+            cb(new Error('Invalid file type. Only JPG and PNG are allowed.'), false)
+        }
+    } catch (e) {
+        throw new Error(e)
     }
-};
+}
 
-testBucketConnection().then(r => {
-    console.log("alsdasdas")
+const upload = multer({
+    storage: storage,
+    fileFilter: filter,
+    limit: {fileSize: 5 * 1024 * 1024},
 })
 
-module.exports = {multer, uploadImageToGCS};
+module.exports = upload

@@ -14,7 +14,7 @@ const authorizationValidator = require("../validators/loginValidator")
 
 userRouter.get("/profile", authValidator, async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select("-__v -password -refreshToken").lean()
+        const user = await User.findById(req.userId).select("-password -refreshToken").lean()
         if (!user) return res.status(401).json({error: "Unauthorized"})
         return res.status(200).json({user: user, accessToken: req.token})
     } catch (e) {
@@ -28,7 +28,6 @@ userRouter.get('/history', authValidator, async (req, res) => {
         const user = await User.findById(req.userId).select("phone").lean()
         if (!user) return res.status(401).json({error: "Unauthorized"})
         const orders = await Order.find({phone: user.phone, deleted: false})
-            .select("-__v")
             .skip((page - 1) * perPage)
             .limit(perPage)
             .lean()
@@ -50,7 +49,7 @@ userRouter.get("/favorite", authValidator, async (req, res) => {
         const user = await User.findById(req.userId).select("favorite").lean()
         if (!user) return res.status(401).json({error: "Unauthorized"})
         const favorite = await Product.find({_id: {$in: user.favorite}})
-            .select("-__v -history")
+            .select("-history")
             .skip((page - 1) * perPage)
             .limit(perPage)
             .lean()
@@ -199,7 +198,7 @@ userRouter.put('/profile', authValidator, async (req, res) => {
     const {phone, city, address} = req.body
     try {
         const user = await User.findById(req.userId)
-            .select("-__v -password")
+            .select("-password")
         const {JWT, RT} = tokenAssign(user._id)
 
         user.refreshToken = RT

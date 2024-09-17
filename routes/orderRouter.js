@@ -4,12 +4,12 @@ const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Product = require("../models/productModel")
 
-const {generateOrderNumber, convertToArray, quantityProducts} = require("../vars/functions")
+const {generateOrderNumber, createInvoice, quantityProducts} = require("../vars/functions")
 
 const orderValidator = require("../validators/orderValidator")
 const monobankValidator = require("../validators/monobankValidator")
 
-const {monoXSIGN, mongoUri, monoURL} = require("../vars/privateVars")
+const {monoXSIGN, mongoUri, monoURL, monoWEBHOOK} = require("../vars/privateVars")
 const axios = require("axios");
 
 //POST
@@ -23,10 +23,12 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         city,
         address,
         customerComment,
-        managerComment,
-        invoiceId
+        managerComment
     } = req.body
+
     try {
+        const bulkOps = await quantityProducts(localStorage)
+        const {invoiceId, pageUrl} = await createInvoice(cost)
         const orderNumber = generateOrderNumber()
         const order = new Order({
             orderNumber: orderNumber,
@@ -42,19 +44,19 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
             invoiceId: invoiceId,
         })
 
+        await order.save()
+
         await User.updateOne(
             {phone: phone},
             {$push: {history: order._id}}
         )
 
-        const bulkOps = await quantityProducts(localStorage)
-
-        await order.save()
         await Product.bulkWrite(bulkOps)
 
         return res.status(201).json({
             message: "Order Successfully created",
-            order: order
+            order: order,
+            pageUrl: pageUrl
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -84,11 +86,10 @@ orderRouter.post("/pay-status", monobankValidator, async (req, res) => {
                 return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
             }
         }).catch(e => {
-            console.error(e.data)
+            throw new Error(e)
         })
         return res.status(400)
-    } catch
-        (e) {
+    } catch (e) {
         return res.status(500)
     }
 })

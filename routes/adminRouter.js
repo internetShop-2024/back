@@ -15,6 +15,7 @@ const orderUpdateValidator = require("../validators/orderUpdateValidator")
 const productUpdateValidator = require("../validators/productUpdateValidator")
 const packUpdateValidator = require("../validators/packUpdateValidator")
 
+
 const {perPage} = require("../vars/publicVars")
 
 const {
@@ -26,7 +27,6 @@ const {
     export2csvSystem, validatePhone, orderProducts, productReviews, productCategory, chooseSection
 } = require("../vars/functions")
 const mongoose = require("mongoose");
-
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -45,7 +45,7 @@ adminRouter.get("/users", adminValidator, async (req, res) => {
             } else {
                 const data = await filterSystem(req.query)
                 const payload = data.payload
-                users = await User.find(payload).select("-password -refreshToken -__v").sort(data.sortOptions)
+                users = await User.find(payload).select("-password -refreshToken").sort(data.sortOptions)
                 if (!users.length)
                     return res.status(404).json({message: "Not Found"})
                 return res.status(200).json(users)
@@ -121,7 +121,8 @@ adminRouter.get('/orders', adminValidator, async (req, res) => {
         if (!id) {
             const data = await filterSystem(req.query)
             const totalProducts = await Order.countDocuments()
-            const orders = await Order.find(data.payload)
+            const orders = await Order
+                .find(data.payload)
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .sort(data.sortOptions)
@@ -157,7 +158,7 @@ adminRouter.get("/packs", adminValidator, async (req, res) => {
             const data = await filterSystem(req.query)
             const totalPacks = await Pack.countDocuments()
             const packs = await Pack.find(data.payload)
-                .select("-__v -createdAt")
+                .select("-createdAt")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .sort(data.sortOptions)
@@ -273,7 +274,7 @@ adminRouter.post("/login", async (req, res) => {
 })
 
 adminRouter.post('/posts', adminValidator, async (req, res) => {
-    const {title, text, image, video, sections, subSections} = req.body
+    const {title, text, image, video, sections, subSections, display} = req.body
 
     try {
         const newPost = new Blog({
@@ -282,7 +283,8 @@ adminRouter.post('/posts', adminValidator, async (req, res) => {
             image: image,
             video: video,
             sections: sections,
-            subSections: subSections
+            subSections: subSections,
+            display: display
         })
         await newPost.save()
         return res.status(201).json({message: 'Post created successfully', post: newPost})
@@ -292,21 +294,26 @@ adminRouter.post('/posts', adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/packs", adminValidator, async (req, res) => {
-    const {photo, article, packName, price, sectionId, subSectionId, productsIds} = req.body
+    const {article, packName, price, sectionId, subSectionId, productsIds, display} = req.body
     try {
+        await authenticateB2()
         if (productsIds && productsIds.length) {
             const products = await Product.find({_id: {$in: productsIds}}).select("_id").lean()
             if (!products) return res.status(404).json({error: "Products Not Found"})
         }
 
         const result = await chooseSection(sectionId, subSectionId)
+
+        await image.save()
+
         const pack = new Pack({
-            photo: photo,
+            image: image,
             article: article,
             packName: packName,
             price: price,
             section: result,
-            products: productsIds
+            products: productsIds,
+            display: display
         })
 
         await pack.save()
@@ -320,13 +327,13 @@ adminRouter.post("/packs", adminValidator, async (req, res) => {
 
 adminRouter.post("/products", adminValidator, async (req, res) => {
     const {
-        photo, name, price, article, description, sectionId, subSectionId, promotion, quantity, video
+        image, name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display
     } = req.body
     try {
         const result = await chooseSection(sectionId, subSectionId)
 
         const product = new Product({
-            photo: photo,
+            image: image,
             name: name,
             price: price,
             article: article,
@@ -334,7 +341,8 @@ adminRouter.post("/products", adminValidator, async (req, res) => {
             promotion: promotion,
             quantity: quantity,
             section: result,
-            video: video
+            video: video,
+            display: display
         })
 
         if (sectionId) {
@@ -353,14 +361,14 @@ adminRouter.post("/products", adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/sections", adminValidator, async (req, res) => {
-    const {photo, name, subSections, products, packs} = req.body
+    const {image, name, subSections, products, packs} = req.body
     try {
         if (subSections?.length > 0) subSections.forEach(subSection => new mongoose.Types.ObjectId(subSection))
 
         if (products?.length > 0) products.forEach(product => new mongoose.Types.ObjectId(product))
 
         const section = new Section({
-            photo: photo, name: name, subSections: subSections, products: products, packs: packs
+            image: image, name: name, subSections: subSections, products: products, packs: packs
         })
 
         await section.save()
@@ -374,14 +382,14 @@ adminRouter.post("/sections", adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/subsections", adminValidator, async (req, res) => {
-    const {photo, name, products, packs} = req.body
+    const {image, name, products, packs} = req.body
     const {id} = req.query
     try {
         if (!id)
             return res.status(404).json({error: "Section not found"})
 
         const subSection = new SubSection({
-            photo: photo, name: name, products: products, packs: packs
+            image: image, name: name, products: products, packs: packs
         })
 
         await subSection.save()
@@ -585,7 +593,7 @@ adminRouter.delete("/users", adminValidator, async (req, res) => {
 })
 
 adminRouter.delete("/orders", adminValidator, async (req, res) => {
-    const {id} = req.body
+    const {id} = req.query
     try {
         if (!id) {
             await Order.deleteMany()

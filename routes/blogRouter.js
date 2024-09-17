@@ -11,7 +11,6 @@ blogRouter.get('/', async (req, res) => {
         if (!id) {
             const totalPosts = await Blog.countDocuments()
             const posts = await Blog.find({display: true})
-                .select("-__v -publicationDate")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .lean()

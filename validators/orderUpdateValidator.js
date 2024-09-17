@@ -5,7 +5,7 @@ const {validateFullname, validatePhone} = require("../vars/functions")
 const orderUpdateValidator = async (req, res, next) => {
     try {
         const {id} = req.query
-        const {fullname, phone, deliveryType, city, address, managerComment, status} = req.body
+        const {fullname, deliveryType, city, address, managerComment, status} = req.body
 
         const order = await Order.findById(id)
         if (!order) return res.status(404).json({error: "Order not found"})
@@ -14,10 +14,6 @@ const orderUpdateValidator = async (req, res, next) => {
         if (fullname && fullname !== order.fullname) {
             if (!validateFullname(req.body.fullname)) return res.status(400).json({error: 'Invalid fullname'})
             updatedFields.fullname = fullname
-        }
-        if (phone && phone !== order.phone) {
-            if (!validatePhone(req.body.phone)) return res.status(400).json({error: 'Invalid phone number'})
-            updatedFields.phone = phone
         }
         if (deliveryType && deliveryType !== order.deliveryType) {
             updatedFields.deliveryType = deliveryType
