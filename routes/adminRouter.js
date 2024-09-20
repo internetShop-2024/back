@@ -24,7 +24,13 @@ const {
     passwordCompare,
     convertToArray,
     filterSystem,
-    export2csvSystem, validatePhone, orderProducts, productReviews, productCategory, chooseSection
+    export2csvSystem,
+    validatePhone,
+    orderProducts,
+    productReviews,
+    productCategory,
+    chooseSection,
+    usersHistory, historyProducts
 } = require("../vars/functions")
 const mongoose = require("mongoose");
 
@@ -34,21 +40,40 @@ adminRouter.get("/users", adminValidator, async (req, res) => {
         try {
             let users
             if (id && !orderId) {
-                const user = await User.find({_id: id}).select('_id createdAt fullName phone email city history')
-                if (!user)
-                    return res.status(404).json({error: "User not found"})
+                const user = await User
+                    .find({_id: id})
+                    .select("-password -refreshToken")
+                    .lean()
+                if (!user?.length)
+                    return res.status(404).json({error: "Нема користувачів"})
+
+                await usersHistory(user)
                 return res.status(200).json({user: user})
             } else if (id && orderId) {
-                const user = await User.findById(id).select('phone').lean()
-                const order = await Order.find({_id: orderId, phone: user.phone})
+                const user = await User
+                    .findById(id)
+                    .select('phone')
+                    .lean()
+
+                const order = await Order
+                    .find({_id: orderId, phone: user.phone})
+                    .lean()
+
+                await historyProducts(order)
                 return res.status(200).json({order: order})
             } else {
                 const data = await filterSystem(req.query)
                 const payload = data.payload
-                users = await User.find(payload).select("-password -refreshToken").sort(data.sortOptions)
-                if (!users.length)
-                    return res.status(404).json({message: "Not Found"})
-                return res.status(200).json(users)
+                users = await User
+                    .find(payload)
+                    .select("-password -refreshToken")
+                    .sort(data.sortOptions)
+                    .lean()
+                if (!users?.length)
+                    return res.status(404).json({message: "Нема користувачів"})
+
+                await usersHistory(users)
+                return res.status(200).json({users: users})
             }
         } catch (e) {
             return res.status(500).json({error: e.message})
@@ -57,17 +82,18 @@ adminRouter.get("/users", adminValidator, async (req, res) => {
 )
 
 adminRouter.get("/reviews", adminValidator, async (req, res) => {
-    const id = req.query.id
+    const {id} = req.query
     try {
         if (!id) {
             const reviews = await Review.find().lean()
             return res.status(200).json({reviews: reviews})
         } else {
-            const review = await Review.findById(id).lean()
-            if (!review)
-                return res.status(404).json({error: "Review not found"})
+            const ids = await convertToArray(id)
+            const reviews = await Review.find({_id: {$in: ids}}).lean()
+            if (!reviews?.length)
+                return res.status(404).json({error: "Нема Відгуків"})
 
-            return res.status(201).json({review: review})
+            return res.status(201).json({reviews: reviews})
         }
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -78,7 +104,7 @@ adminRouter.get("/export", adminValidator, async (req, res) => {
     let {id, collection} = req.query
     try {
         if (!collection)
-            return res.status(400).json({error: 'Collection name is required'})
+            return res.status(400).json({error: 'Вкажіть назву колонки'})
 
         const csv = await export2csvSystem(id, collection)
         res.header('Content-Type', 'text/csv')
@@ -128,7 +154,7 @@ adminRouter.get('/orders', adminValidator, async (req, res) => {
                 .sort(data.sortOptions)
                 .lean()
             if (!orders.length)
-                return res.status(404).json({message: "Orders Not Found"})
+                return res.status(404).json({message: "Нема замовлень"})
 
             return res.status(200).json({
                 orders: orders, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
@@ -136,7 +162,7 @@ adminRouter.get('/orders', adminValidator, async (req, res) => {
         } else {
             const order = await Order.findById(id).lean()
             if (!order)
-                return res.status(404).json({error: 'Order Not Found'})
+                return res.status(404).json({error: 'Нема замовлень'})
 
             await orderProducts(order)
 
@@ -151,9 +177,8 @@ adminRouter.get("/packs", adminValidator, async (req, res) => {
     const page = parseInt(req.query.page) || 1
     const {id} = req.query
     try {
-        if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined) {
-            throw new Error("You must provide only one of sectionId or subSectionId")
-        }
+        if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined)
+            return res.status(400).json({error: "Потрібно вказати або категорію,або підкатегорію"})
         if (!id) {
             const data = await filterSystem(req.query)
             const totalPacks = await Pack.countDocuments()
@@ -163,13 +188,13 @@ adminRouter.get("/packs", adminValidator, async (req, res) => {
                 .limit(perPage)
                 .sort(data.sortOptions)
                 .lean()
-            if (!packs.length) return res.status(404).json({error: "No Packs Found"})
+            if (!packs.length) return res.status(404).json({error: "Нема паків"})
             return res.status(200).json({
                 packs: packs, currentPage: page, totalPages: Math.ceil(totalPacks / perPage)
             })
         } else {
             const pack = await Pack.findById(id)
-            if (!pack) return res.status(404).json({error: "No Pack Found"})
+            if (!pack) return res.status(404).json({error: "Нема Паків"})
             return res.status(200).json({pack: pack})
         }
     } catch (e) {
@@ -183,9 +208,8 @@ adminRouter.get("/products", adminValidator, async (req, res) => {
 
     try {
         if (!id) {
-            if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined) {
-                throw new Error("You must provide only one of sectionId or subSectionId")
-            }
+            if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined)
+                return res.status(400).json({error: "Потрібно вказати або категорію,або підкатегорію"})
 
             const data = await filterSystem(req.query)
             const totalProducts = await Product.countDocuments()
@@ -195,7 +219,7 @@ adminRouter.get("/products", adminValidator, async (req, res) => {
                 .sort(data.sortOptions)
                 .lean()
 
-            if (!products.length) return res.status(404).json({message: "Product Not Found"})
+            if (!products.length) return res.status(404).json({message: "Нема продуктів"})
 
             await productReviews(products)
             await productCategory(products)
@@ -205,11 +229,11 @@ adminRouter.get("/products", adminValidator, async (req, res) => {
             })
         } else {
             const product = await Product.findOne({_id: id}).lean()
-            if (!product) return res.status(404).json({error: "Product not found"})
+            if (!product) return res.status(404).json({error: "Нема продуктів"})
             await productReviews([product])
             await productCategory([product])
             if (!product)
-                return res.status(404).json({message: "Product not found"})
+                return res.status(404).json({message: "Нема продуктів"})
 
             return res.status(200).json({product: product})
         }
@@ -222,13 +246,10 @@ adminRouter.get("/products", adminValidator, async (req, res) => {
 adminRouter.post("/create", async (req, res) => {
     const {username, password} = req.body
     try {
-        if (!username || !password)
-            return res.status(400).json({error: "Fill all inputs"})
-
         const admin = await Admin.findOne({username: username})
 
         if (admin)
-            return res.status(400).json({error: "Already exist"})
+            return res.status(400).json({error: "Такий адмін існує вже"})
 
         const newAdmin = new Admin({
             username: username,
@@ -240,7 +261,7 @@ adminRouter.post("/create", async (req, res) => {
         await newAdmin.save()
 
         return res.status(201).json({
-            message: "Successfully created",
+            message: "Успішно створено",
             accessToken: AT,
         })
     } catch (e) {
@@ -294,9 +315,9 @@ adminRouter.post('/posts', adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/packs", adminValidator, async (req, res) => {
-    const {article, packName, price, sectionId, subSectionId, productsIds, display} = req.body
+    const {image, article, packName, price, sectionId, subSectionId, productsIds, display} = req.body
     try {
-        await authenticateB2()
+        // await authenticateB2()
         if (productsIds && productsIds.length) {
             const products = await Product.find({_id: {$in: productsIds}}).select("_id").lean()
             if (!products) return res.status(404).json({error: "Products Not Found"})
@@ -304,7 +325,7 @@ adminRouter.post("/packs", adminValidator, async (req, res) => {
 
         const result = await chooseSection(sectionId, subSectionId)
 
-        await image.save()
+        // await image.save()
 
         const pack = new Pack({
             image: image,
@@ -423,13 +444,13 @@ adminRouter.put("/reviews", adminValidator, async (req, res) => {
             const updated = await Review.updateOne(
                 {_id: id},
                 {
-                    $set: {
+                    $push: {
                         'content.reply': {
                             replySenderId: req.adminId,
                             replyText: replyText,
                             repliedAt: Date.now()
 
-                        }
+                        },
                     }
                 }
             )
@@ -467,15 +488,14 @@ adminRouter.put('/posts', adminValidator, async (req, res) => {
     const {id} = req.query
     const {title, text, image, video, sections, display} = req.body
     try {
-        const updatedPost = await Blog.findByIdAndUpdate(
-            id,
-            {title, text, image, video, sections, display},
-            {new: true}
+        await Blog.updateOne(
+            {_id: id},
+            {
+                $set: {title, text, video, sections, display},
+                $push: {image: image}
+            }
         )
-        if (!updatedPost) {
-            return res.status(404).json({error: 'Post not found'})
-        }
-        return res.status(200).json({message: 'Post updated successfully', post: updatedPost})
+        return res.status(200).json({message: 'Post updated successfully'})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

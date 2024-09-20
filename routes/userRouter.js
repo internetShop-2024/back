@@ -7,7 +7,7 @@ const Review = require("../models/reviewModel")
 
 const {perPage} = require("../vars/publicVars")
 
-const {passwordHash, tokenAssign, convertToArray} = require("../vars/functions");
+const {passwordHash, tokenAssign, convertToArray, historyProducts} = require("../vars/functions");
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
 const authorizationValidator = require("../validators/loginValidator")
@@ -34,6 +34,8 @@ userRouter.get('/history', authValidator, async (req, res) => {
         const totalOrders = await Order.countDocuments({phone: user.phone, deleted: false})
 
         if (!orders.length) return res.status(404).json({error: "No orders found for this user"})
+
+        await historyProducts(orders, 'article name price image')
 
         return res.status(200).json({
             orders: orders, currentPage: page, totalPages: Math.ceil(totalOrders / perPage)
@@ -114,11 +116,7 @@ userRouter.post("/register", registerValidator, async (req, res) => {
 })
 
 userRouter.post("/authorization", authorizationValidator, async (req, res) => {
-    const {email, password} = req.body
     try {
-        if (!email || !password)
-            return res.status(400).json({error: "Fill all inputs"})
-
         const user = req.user
 
         const {JWT, RT: NRT} = tokenAssign(user._id)

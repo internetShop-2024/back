@@ -15,14 +15,14 @@ const reviewSchema = new mongoose.Schema({
                 type: String,
                 required: true,
             },
-            reply: {
+            reply: [{
                 replySenderId: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: "Admin",
                 },
                 replyText: String,
                 repliedAt: Date
-            }
+            }]
         },
         createdAt: {
             type: Date,

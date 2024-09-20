@@ -2,9 +2,12 @@ const {validateEmail, passwordCompare} = require("../vars/functions");
 const User = require("../models/userModel");
 const loginValidator = async (req, res, next) => {
     try {
-        const email = req.body.email
+        const {email, password} = req.body
+        if (!email || !password)
+            return res.status(400).json({error: "Заповніть всі поля"})
+
         if (!validateEmail(email))
-            return res.status(400).json({error: "Invalid Email"}).lean()
+            return res.status(400).json({error: "Invalid Email"})
 
         const user = await User.findOne({email: email})
         if (!user)

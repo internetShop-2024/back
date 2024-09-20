@@ -123,6 +123,30 @@ const export2csvSystem = async (id, collection) => {
     return parser.parse(data)
 }
 
+const usersHistory = async (users) => {
+    return await Promise.all(users.map(async (user) => {
+        if (user.history?.length) {
+            let history = await Order
+                .find({_id: {$in: user.history}})
+                .lean()
+            await historyProducts(history)
+            user.history = history
+        }
+    }))
+}
+
+const historyProducts = async (history, filter = "") => {
+    return await Promise.all(history.map(async (order) => {
+        for (let product of order.localStorage) {
+            product.goodsId = await Product
+                .findOne({_id: product.goodsId})
+                .select(filter)
+                .lean()
+            if (product?.reviews) await productReviews([product])
+        }
+    }))
+}
+
 //PRODUCTS
 const productReviews = async (products) => {
     return await Promise.all(products.map(async product => {
@@ -322,7 +346,7 @@ const sectionPacks = async (section) => {
 
 module.exports = {
     //ADMINS
-    convertToArray, filterSystem, export2csvSystem, chooseSection,
+    convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts,
     //PRODUCTS
     productReviews, productCategory,
     //USERS

@@ -1,19 +1,20 @@
 const mongoose = require("mongoose")
+const uniqueValidator = require("mongoose-unique-validator")
 
 const adminSchema = new mongoose.Schema({
         username: {
             type: String,
-            required: true,
+            required: [true, 'Username потрібно вказати'],
             unique: true
         },
         password: {
             type: String,
-            required: true,
+            required: [true, 'Password потрібно вказати'],
         },
         calls: [{
             callPhone: {
                 type: String,
-                required: true
+                required: [true, 'Phone потрібно вказати'],
             },
             createdAt: {
                 type: Date,
@@ -32,6 +33,7 @@ const adminSchema = new mongoose.Schema({
 )
 
 adminSchema.path("calls").schema.set("_id", false)
+adminSchema.plugin(uniqueValidator, {message: '{PATH} повторяється'})
 
 const Admin = mongoose.model("Admin", adminSchema)
 

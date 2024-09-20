@@ -4,12 +4,26 @@ const logger = require("morgan")
 const cors = require("cors")
 const mongoose = require("mongoose")
 const cookieParser = require("cookie-parser")
+const rateLimit = require("express-rate-limit")
+const bodyParser = require("body-parser")
 
 const {port, mongoUri} = require("./vars/privateVars")
 const router = require("./routes/mainRouter")
 
 const app = express()
+const limiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 50,
+    message: {error: "Пацики,не грузіть сервер.Трохи спокійніше)"}
+})
 
+app.set('trust proxy', 'loopback, linklocal, uniquelocal')
+app.use(bodyParser.json())
+app.use((req, res, next) => {
+    console.log({"Body": req.body})
+    next()
+})
+app.use(limiter)
 app.use(logger("combined"))
 app.use(json())
 app.use(cors("*"))
