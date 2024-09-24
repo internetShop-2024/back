@@ -30,7 +30,10 @@ const {
     productReviews,
     productCategory,
     chooseSection,
-    usersHistory, historyProducts
+    usersHistory,
+    historyProducts,
+    packProducts,
+    reviewsSenders
 } = require("../vars/functions")
 const mongoose = require("mongoose");
 
@@ -85,7 +88,10 @@ adminRouter.get("/reviews", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const reviews = await Review.find().lean()
+            const reviews = await Review
+                .find()
+                .lean()
+            await reviewsSenders(reviews)
             return res.status(200).json({reviews: reviews})
         } else {
             const ids = await convertToArray(id)
@@ -183,17 +189,20 @@ adminRouter.get("/packs", adminValidator, async (req, res) => {
             const data = await filterSystem(req.query)
             const totalPacks = await Pack.countDocuments()
             const packs = await Pack.find(data.payload)
-                .select("-createdAt")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .sort(data.sortOptions)
                 .lean()
             if (!packs.length) return res.status(404).json({error: "Нема паків"})
+            await packProducts(packs)
             return res.status(200).json({
                 packs: packs, currentPage: page, totalPages: Math.ceil(totalPacks / perPage)
             })
         } else {
-            const pack = await Pack.findById(id)
+            const pack = await Pack
+                .findById(id)
+                .lean()
+            await packProducts([pack])
             if (!pack) return res.status(404).json({error: "Нема Паків"})
             return res.status(200).json({pack: pack})
         }
@@ -315,14 +324,21 @@ adminRouter.post('/posts', adminValidator, async (req, res) => {
 })
 
 adminRouter.post("/packs", adminValidator, async (req, res) => {
-    const {image, article, packName, price, sectionId, subSectionId, productsIds, display} = req.body
+    const {
+        image,
+        article,
+        packName,
+        price,
+        sectionId,
+        subSectionId,
+        products,
+        display,
+        video,
+        description,
+        quantity
+    } = req.body
     try {
         // await authenticateB2()
-        if (productsIds && productsIds.length) {
-            const products = await Product.find({_id: {$in: productsIds}}).select("_id").lean()
-            if (!products) return res.status(404).json({error: "Products Not Found"})
-        }
-
         const result = await chooseSection(sectionId, subSectionId)
 
         // await image.save()
@@ -333,8 +349,11 @@ adminRouter.post("/packs", adminValidator, async (req, res) => {
             packName: packName,
             price: price,
             section: result,
-            products: productsIds,
-            display: display
+            products: products,
+            display: display,
+            video: video,
+            description: description,
+            quantity: quantity
         })
 
         await pack.save()
@@ -534,7 +553,7 @@ adminRouter.put("/packs", adminValidator, packUpdateValidator, async (req, res) 
             );
         }
         const updatedPack = await Pack.findByIdAndUpdate(id, updatedFields);
-        if (!updatedPack) return res.status(404).json({error: "Pack not found"});
+        if (!updatedPack) return res.status(404).json({error: "Нема такого паку"});
 
         const newSection = await chooseSection(sectionId, subSectionId)
         if (newSection && newSection !== updatedPack.section) {
@@ -549,7 +568,7 @@ adminRouter.put("/packs", adminValidator, packUpdateValidator, async (req, res) 
                 );
             }
         }
-        return res.status(200).json({pack: updatedPack});
+        return res.status(200).json({message: "Пак оновлено"});
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

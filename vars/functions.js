@@ -107,14 +107,18 @@ const export2csvSystem = async (id, collection) => {
     }
     switch (collection) {
         case 'products':
-            data = await Product.find(config).select("-__v").lean()
+            data = await Product.find(config).lean()
             await productReviews(data)
             break
         case 'orders':
-            data = await Order.find(config).select("-__v").lean()
+            data = await Order.find(config).lean()
             break
         case 'users':
-            data = await User.find(config).select("-__v -password -refreshToken").lean()
+            data = await User.find(config).select("-password -refreshToken").lean()
+            break
+        case 'packs':
+            data = await Pack.find(config).lean()
+            await packProducts(data)
             break
         default:
             throw new Error("Can't find anything")
@@ -144,6 +148,16 @@ const historyProducts = async (history, filter = "") => {
                 .lean()
             if (product?.reviews) await productReviews([product])
         }
+    }))
+}
+
+const reviewsSenders = async (reviews) => {
+    return await Promise.all(reviews.map(async (review) => {
+        console.log(review.reviewSender)
+        review.reviewSender = await User
+            .findById(review.reviewSender)
+            .select("fullname")
+            .lean()
     }))
 }
 
@@ -337,16 +351,32 @@ const sectionSubSections = async (data) => {
     }
 }
 
+
+//Packs
 const sectionPacks = async (section) => {
-    const packs = await Pack.find({_id: {$in: section.packs}}).select("-__v").lean()
-    if (!packs) throw new Error("Packs not found")
+    const packs = await Pack
+        .find({_id: {$in: section.packs}})
+        .lean()
+    if (!packs) throw new Error("Нема паку")
     section.packs = packs
     return section
 }
 
+const packProducts = async (packs) => {
+    return await Promise.all(packs.map(async pack => {
+        if (pack?.products?.length > 0)
+            for (let p of pack.products) {
+                p.product = await Product
+                    .findOne({_id: p.product})
+                    .select("name")
+                    .lean()
+            }
+    }))
+}
+
 module.exports = {
     //ADMINS
-    convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts,
+    convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts, reviewsSenders,
     //PRODUCTS
     productReviews, productCategory,
     //USERS
@@ -358,5 +388,5 @@ module.exports = {
     //SECTIONS
     sectionProducts, sectionSubSections,
     //PACKS
-    sectionPacks,
+    sectionPacks, packProducts
 }

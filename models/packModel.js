@@ -7,13 +7,23 @@ const packSchema = new mongoose.Schema({
             unique: true
         },
         image: String,
+        video: String,
+        description: String,
+        quantity: Number,
         article: String,
         price: Number,
         section: mongoose.Schema.Types.ObjectId,
-        products: {
-            type: [mongoose.Schema.Types.ObjectId],
-            ref: "Product"
-        },
+        products: [{
+            product: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Product",
+                required: [true, "Продукт потрібно добавити до паку"]
+            },
+            quantity: {
+                type: Number,
+                required: [true, "Вкажіть кількість продукту"]
+            }
+        }],
         display: {
             type: Boolean,
             default: true
@@ -26,6 +36,8 @@ const packSchema = new mongoose.Schema({
         versionKey: false
     }
 )
+
+packSchema.path("products").schema.set('_id', false)
 
 const Pack = mongoose.model("Pack", packSchema)
 

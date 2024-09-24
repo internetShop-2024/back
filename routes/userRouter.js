@@ -169,7 +169,7 @@ userRouter.post("/review", authValidator, async (req, res) => {
     const {id} = req.query
     try {
         const review = new Review({
-            reviewSenderId: req.userId,
+            reviewSender: req.userId,
             product: id,
             content: {text: text}
         })

@@ -19,10 +19,6 @@ const limiter = rateLimit({
 
 app.set('trust proxy', 'loopback, linklocal, uniquelocal')
 app.use(bodyParser.json())
-app.use((req, res, next) => {
-    console.log({"Body": req.body})
-    next()
-})
 app.use(limiter)
 app.use(logger("combined"))
 app.use(json())
