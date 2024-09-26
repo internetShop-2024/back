@@ -54,7 +54,7 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         await Product.bulkWrite(bulkOps)
 
         return res.status(201).json({
-            message: "Order Successfully created",
+            message: "Замовлення успішно створено",
             order: order,
             pageUrl: pageUrl
         })

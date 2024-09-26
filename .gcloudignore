@@ -14,12 +14,7 @@
 .gitignore
 .env.example
 Alan.postman_collection.json
-models/user.js
-migrations/20240712075511-create-user.js
-uploads/
-b2.js
-multer.js
-imageModel.js
+test.html
 
 # Node.js dependencies:
 node_modules/

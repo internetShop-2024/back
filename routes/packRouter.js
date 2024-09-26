@@ -27,13 +27,13 @@ packRouter.get("/", async (req, res) => {
                 .limit(perPage)
                 .sort(data.sortOptions)
                 .lean()
-            if (!packs.length) return res.status(404).json({error: "No Packs Found"})
+            if (!packs.length) return res.status(404).json({error: "Нема паків"})
             return res.status(200).json({
                 packs: packs, currentPage: page, totalPages: Math.ceil(totalPacks / perPage)
             })
         } else {
             const pack = await Pack.findById(id)
-            if (!pack) return res.status(404).json({error: "No Pack Found"})
+            if (!pack) return res.status(404).json({error: "Нема паків"})
             return res.status(200).json({pack: pack})
         }
     } catch (e) {

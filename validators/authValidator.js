@@ -11,7 +11,10 @@ const authValidator = async (req, res, next) => {
             const refreshToken = req.headers.refreshtoken?.replace("Bearer ", "")
             const decoded = await validateToken(refreshToken, "RT")
             if (!decoded) return res.status(401).json({error: 'Unauthorized'})
-            user = await User.findById(decoded.id).lean("refreshToken")
+            user = await User
+                .findById(decoded.id)
+                .select("refreshToken")
+                .lean()
 
             if (!user || user.refreshToken !== refreshToken) return res.status(401).json({error: 'Unauthorized'})
 

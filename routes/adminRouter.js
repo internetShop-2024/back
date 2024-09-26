@@ -17,6 +17,7 @@ const packUpdateValidator = require("../validators/packUpdateValidator")
 
 
 const {perPage} = require("../vars/publicVars")
+const upload = require("../vars/multer")
 
 const {
     passwordHash,
@@ -36,6 +37,7 @@ const {
     reviewsSenders
 } = require("../vars/functions")
 const mongoose = require("mongoose");
+const {authenticateB2, uploadMultipleFiles} = require("../vars/b2");
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -116,6 +118,20 @@ adminRouter.get("/export", adminValidator, async (req, res) => {
         res.header('Content-Type', 'text/csv')
         res.attachment(`${collection}.csv`)
         return res.send(csv)
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.get("/calls", adminValidator, async (req, res) => {
+    try {
+        const admin = await Admin
+            .findById(req.adminId)
+            .select("calls")
+            .lean()
+
+        if (!admin.calls?.length) return res.status(404).json({message: "Ше ніхто номер не лишав"})
+        return res.status(200).json({calls: admin.calls})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -213,7 +229,7 @@ adminRouter.get("/packs", adminValidator, async (req, res) => {
 
 adminRouter.get("/products", adminValidator, async (req, res) => {
     const page = parseInt(req.query.page) || 1
-    const id = req.query.id
+    const {id} = req.query
 
     try {
         if (!id) {
@@ -282,15 +298,15 @@ adminRouter.post("/login", async (req, res) => {
     const {username, password} = req.body
     try {
         if (!username || !password)
-            return res.status(400).json({error: "Fill all inputs"})
+            return res.status(400).json({error: "Заповність потрібні колонки"})
 
         const admin = await Admin.findOne({username: username})
 
         if (!admin)
-            return res.status(400).json({error: "Invalid Username or Password"})
+            return res.status(400).json({error: "Недійсне ім'я користувача або пароль"})
 
         if (!await passwordCompare(admin.password, password))
-            return res.status(400).json({error: "Invalid Username or Password"})
+            return res.status(400).json({error: "Недійсне ім'я користувача або пароль"})
 
         const AT = adminTokenAssign(admin)
 
@@ -317,7 +333,7 @@ adminRouter.post('/posts', adminValidator, async (req, res) => {
             display: display
         })
         await newPost.save()
-        return res.status(201).json({message: 'Post created successfully', post: newPost})
+        return res.status(201).json({message: 'Посто успішно створено', post: newPost})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -365,7 +381,7 @@ adminRouter.post("/packs", adminValidator, async (req, res) => {
     }
 })
 
-adminRouter.post("/products", adminValidator, async (req, res) => {
+adminRouter.post("/products", adminValidator, upload.array("image", 4), async (req, res) => {
     const {
         image, name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display
     } = req.body
@@ -389,47 +405,66 @@ adminRouter.post("/products", adminValidator, async (req, res) => {
             await Section.updateOne({_id: sectionId}, {$push: {products: product._id}})
         } else if (subSectionId) {
             await SubSection.updateOne({_id: subSectionId}, {$push: {products: product._id}})
-        } else return res.status(400).json({error: "You can't assign product to Section and SubSection"})
+        } else return res.status(400).json({error: "Потрібно вказати або категорію,або підкатегорію"})
 
         await product.save()
         return res.status(201).json({
-            message: "Successfully created", product: product
+            message: "Продукт успішно створено", product: product
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
-adminRouter.post("/sections", adminValidator, async (req, res) => {
-    const {image, name, subSections, products, packs} = req.body
+adminRouter.post("/sections", adminValidator, upload.single("image"), async (req, res) => {
+    const {name, subSections, products, packs} = req.body
+    const image = req.file
     try {
+        if (!name) return res.status(400).json({message: "Вкажіть назву категорії"})
+
+        if (await Section.findOne({name: name})) return res.status(400).json({message: "Назва зайнята"})
+
+        if (!image) return res.status(400).json({message: "Ви забули додати зображення"})
+
         if (subSections?.length > 0) subSections.forEach(subSection => new mongoose.Types.ObjectId(subSection))
 
         if (products?.length > 0) products.forEach(product => new mongoose.Types.ObjectId(product))
 
+        await authenticateB2()
+        const urls = await uploadMultipleFiles([image])
+
         const section = new Section({
-            image: image, name: name, subSections: subSections, products: products, packs: packs
+            image: urls, name: name, subSections: subSections, products: products, packs: packs
         })
 
         await section.save()
 
         return res.status(201).json({
-            message: "Successfully created", section: section
+            message: "Категорію успішно створено", section: section
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
-adminRouter.post("/subsections", adminValidator, async (req, res) => {
-    const {image, name, products, packs} = req.body
+adminRouter.post("/subsections", adminValidator, upload.single('image'), async (req, res) => {
+    const {name, products, packs} = req.body
+    const image = req.file
     const {id} = req.query
     try {
-        if (!id)
-            return res.status(404).json({error: "Section not found"})
+        if (!id) return res.status(404).json({error: "Вкажіть категорію"})
+
+        if (!name) return res.status(400).json({message: "Вкажіть назву підкатегорії"})
+
+        if (!image) return res.status(400).json({message: "Ви забули додати зображення"})
+
+        if (await SubSection.findOne({name: name})) return res.status(400).json({message: "Назва зайнята"})
+
+        await authenticateB2()
+        const urls = await uploadMultipleFiles([image])
 
         const subSection = new SubSection({
-            image: image, name: name, products: products, packs: packs
+            image: urls, name: name, products: products, packs: packs
         })
 
         await subSection.save()
@@ -440,10 +475,10 @@ adminRouter.post("/subsections", adminValidator, async (req, res) => {
         )
 
         if (updated.modifiedCount === 0)
-            return res.status(400).json({error: "SubSection not created"})
+            return res.status(400).json({error: "Підкатегорію не створено"})
 
         return res.status(201).json({
-            message: "Successfully created", subSection: subSection
+            message: "Підкатегорію успішно створено", subSection: subSection
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -452,13 +487,13 @@ adminRouter.post("/subsections", adminValidator, async (req, res) => {
 
 //PUT
 adminRouter.put("/reviews", adminValidator, async (req, res) => {
-    const id = req.query.id
+    const {id} = req.query
     const {replyText} = req.body
     try {
         if (!id) {
-            return res.status(404).json({error: "Review not found"})
+            return res.status(404).json({error: "Вкажіть відгук"})
         } else if (!replyText) {
-            return res.status(400).json({error: "Fill the inputs"})
+            return res.status(400).json({error: "Треба щось написати"})
         } else {
             const updated = await Review.updateOne(
                 {_id: id},
@@ -475,9 +510,9 @@ adminRouter.put("/reviews", adminValidator, async (req, res) => {
             )
 
             if (updated.modifiedCount < 1)
-                return res.status(400).json({error: "Not Replied"})
+                return res.status(400).json({error: "Не вдалося відповісти"})
 
-            return res.status(201).json({message: "Answered"})
+            return res.status(201).json({message: "Успішно відповіли"})
         }
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -489,15 +524,18 @@ adminRouter.put("/calls", async (req, res) => {
     try {
         const validatedPhone = await validatePhone(phone)
         if (!validatedPhone)
-            return res.status(400).json({error: "Send correct phone number"})
+            return res.status(400).json({error: "Номер недійсний"})
+
+        if (await Admin.findOne({'calls.callPhone': phone}).select("_id").lean())
+            return res.status(400).json({message: "Не хвилюйтесь ми вам передзвоним"})
 
         const call = {
-            phone: phone,
+            callPhone: phone,
             text: text
         }
 
-        await Admin.updateOne({}, {$push: {calls: call}})
-        return res.status(201).json({message: "We will call you"})
+        await Admin.updateMany({}, {$push: {calls: call}})
+        return res.status(201).json({message: "Ми вам передзвоним"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -514,7 +552,7 @@ adminRouter.put('/posts', adminValidator, async (req, res) => {
                 $push: {image: image}
             }
         )
-        return res.status(200).json({message: 'Post updated successfully'})
+        return res.status(200).json({message: 'Пост успішно змінено'})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -529,7 +567,7 @@ adminRouter.put("/orders", adminValidator, orderUpdateValidator, async (req, res
 
         await order.save()
 
-        return res.status(201).json({message: "Order updated successfully", order: order})
+        return res.status(201).json({message: "Замовлення успішно змінено", order: order})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -579,7 +617,7 @@ adminRouter.put("/products", adminValidator, productUpdateValidator, async (req,
         const {history, ...payload} = req.product
 
         return res.status(200).json({
-            message: "Product successfully updated", product: payload, changes: req.editHistory
+            message: "Продукт успішно змінено", product: payload, changes: req.editHistory
         })
     } catch (e) {
         return res.status(500).json({error: e.message})
@@ -590,9 +628,16 @@ adminRouter.put("/promotion", adminValidator, async (req, res) => {
         const {discount, isActive} = req.body
         const {id} = req.query
         try {
-            if (!id) return res.status(404).json({error: "Section not found"})
-            const section = await Section.findById(id).select('products').lean()
-            const products = await Product.find({_id: {$in: section.products}}).select('price promotion').lean()
+            if (!id) return res.status(404).json({error: "Вкажіть категорію"})
+            const section = await Section
+                .findById(id)
+                .select('products')
+                .lean()
+
+            const products = await Product
+                .find({_id: {$in: section.products}})
+                .select('price promotion')
+                .lean()
 
             const bulkOperations = products.map(product => {
                 const newPrice = discount ? product.price * discount : product.promotion.newPrice
@@ -607,7 +652,7 @@ adminRouter.put("/promotion", adminValidator, async (req, res) => {
                 }
             })
             await Product.bulkWrite(bulkOperations)
-            return res.status(200).json({message: "Products updated successfully"})
+            return res.status(200).json({message: "Знижки добавлено"})
         } catch (e) {
             return res.status(500).json({error: e.message})
         }
@@ -620,12 +665,27 @@ adminRouter.delete("/users", adminValidator, async (req, res) => {
     try {
         if (!id) {
             await User.deleteMany()
-            return res.status(201).json({message: "Deleted"})
+            return res.status(201).json({message: "Успішно видалено"})
         } else {
             const ids = await convertToArray(id)
             await User.deleteMany({_id: {$in: ids}})
-            return res.status(201).json({message: "Deleted"})
+            return res.status(201).json({message: "Успішно видалено"})
         }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.delete("/calls", adminValidator, async (req, res) => {
+    const {phone} = req.body
+    try {
+        if (!phone && !validatePhone(phone)) return res.status(404).json({error: "Потрібно вказати номер для видалення"})
+        await Admin.updateMany(
+            {},
+            {$pull: {calls: {callPhone: phone}}}
+        )
+
+        return res.status(201).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -637,13 +697,12 @@ adminRouter.delete("/orders", adminValidator, async (req, res) => {
         if (!id) {
             await Order.deleteMany()
             await User.updateMany({}, {$pull: {history: {$in: []}}})
-            return res.status(201).json({message: "All orders deleted"})
         } else {
             const ids = await convertToArray(id)
             await Order.deleteMany({_id: {$in: ids}})
             await User.updateMany({}, {$pull: {history: {$in: ids}}})
-            return res.status(201).json({message: "Order deleted"})
         }
+        return res.status(201).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -654,12 +713,11 @@ adminRouter.delete('/posts', adminValidator, async (req, res) => {
     try {
         if (!id) {
             await Blog.deleteMany()
-            return res.status(201).json({message: 'Post deleted successfully'})
         } else {
             const ids = await convertToArray(id)
             await Blog.deleteMany({_id: {$in: ids}})
-            return res.status(201).json({message: 'Post deleted successfully'})
         }
+        return res.status(201).json({message: 'Успішно видалено'})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -672,14 +730,13 @@ adminRouter.delete('/packs', adminValidator, async (req, res) => {
             await Pack.deleteMany()
             await Section.updateMany({}, {$set: {packs: []}})
             await SubSection.updateMany({}, {$set: {packs: []}})
-            return res.status(201).json({message: 'All Packs Deleted'})
         } else {
             const ids = await convertToArray(id)
             await Pack.deleteMany({_id: {$in: ids}})
             await Section.updateMany({packs: {$in: ids}}, {$pull: {packs: {$in: ids}}})
             await SubSection.updateMany({packs: {$in: ids}}, {$pull: {packs: {$in: ids}}})
-            return res.status(201).json({message: 'Packs Deleted Successfully'})
         }
+        return res.status(201).json({message: 'Успішно видалено'})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -692,14 +749,13 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
             await Product.deleteMany()
             await Section.updateMany({}, {$pull: {products: {$in: []}}})
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
-            return res.status(201).json({message: "All products deleted"})
         } else {
             const ids = await convertToArray(id)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await SubSection.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await Product.deleteMany({_id: {$in: ids}})
-            return res.status(201).json({message: "Product deleted"})
         }
+        return res.status(201).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -716,7 +772,7 @@ adminRouter.delete("/reviews", adminValidator, async (req, res) => {
             await Review.deleteMany({_id: {$in: ids}})
             await Product.updateMany({_id: {$in: ids}}, {$pull: {reviews: {$in: ids}}})
         }
-        return res.status(201).json({message: "Successfully deleted"})
+        return res.status(201).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -728,12 +784,12 @@ adminRouter.delete("/sections", adminValidator, async (req, res) => {
         if (!id) {
             await Section.deleteMany()
             await Product.updateMany({}, {$set: {section: null}})
-            return res.status(201).json({message: "Deleted"})
         } else {
             const ids = await convertToArray(id)
             await Section.deleteMany({_id: {$in: ids}})
             await Product.updateMany({section: {$in: ids}}, {$set: {section: null}})
         }
+        return res.status(201).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -745,13 +801,12 @@ adminRouter.delete("/subsections", adminValidator, async (req, res) => {
         if (!id) {
             await SubSection.deleteMany()
             await Section.updateMany({}, {$set: {subSections: []}})
-            return res.status(201).json({message: "Deleted"})
         } else {
             const ids = await convertToArray(id)
             await SubSection.deleteMany({_id: {$in: ids}})
             await Section.updateMany({subSections: {$in: ids}}, {$pull: {subSections: {$in: ids}}})
-            return res.status(201).json({message: "Deleted"})
         }
+        return res.status(201).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

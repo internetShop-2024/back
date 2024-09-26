@@ -18,7 +18,7 @@ const Pack = require("../models/packModel")
 const chooseSection = async (sectionId, subSectionId) => {
     return (sectionId !== undefined && subSectionId !== undefined)
         ? (() => {
-            throw new Error('Both sectionId and subSectionId are defined');
+            throw new Error("Треба вказати або категорію,або підкатегорію");
         })()
         : (sectionId !== undefined ? sectionId : subSectionId);
 }
@@ -88,7 +88,7 @@ const filterSystem = async (data) => {
         const orderData = await convertToArray(data.orderBy)
         const sortData = await convertToArray(data.sortBy)
         if (sortData.length !== orderData.length) {
-            throw new Error("Sort fields and orders mismatch")
+            throw new Error("Невідповідність полів сортування та порядку")
         }
         sortData.forEach((field, index) => {
             sortOptions[field] = parseInt(orderData[index]) || 1
@@ -121,9 +121,9 @@ const export2csvSystem = async (id, collection) => {
             await packProducts(data)
             break
         default:
-            throw new Error("Can't find anything")
+            throw new Error("Незнайшов такого")
     }
-    if (!data.length) throw new Error("Pls select objects correctly ")
+    if (!data.length) throw new Error("Невдалось скачати")
     return parser.parse(data)
 }
 
@@ -153,7 +153,6 @@ const historyProducts = async (history, filter = "") => {
 
 const reviewsSenders = async (reviews) => {
     return await Promise.all(reviews.map(async (review) => {
-        console.log(review.reviewSender)
         review.reviewSender = await User
             .findById(review.reviewSender)
             .select("fullname")
@@ -167,10 +166,10 @@ const productReviews = async (products) => {
         if (product.reviews && product.reviews.length > 0) {
             const reviews = await Review.find({_id: {$in: product.reviews}}).select("-product").lean();
             product.reviews = await Promise.all(reviews.map(async (review) => {
-                const user = await User.findOne({_id: review.reviewSenderId}).select('fullname').lean();
+                const user = await User.findOne({_id: review.reviewSender}).select('fullname').lean();
                 return {
                     ...review,
-                    fullname: user.fullname
+                    fullname: user?.fullname
                 };
             }));
         }
@@ -284,8 +283,8 @@ const quantityProducts = async (data) => {
 
     for (let i = 0; i < ids.length; i++) {
         const product = await Product.findById(ids[i])
-        if (!product) throw new Error("No Product Found")
-        if (product.quantity < quantities[i]) throw new Error(`Not enough quantity for '${product.name}'`)
+        if (!product) throw new Error("Нема такого продукта")
+        if (product.quantity < quantities[i]) throw new Error(`Недостатньо для '${product.name}'`)
     }
 
     return ids.map((id, index) => ({

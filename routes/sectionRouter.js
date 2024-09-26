@@ -15,7 +15,7 @@ sectionRouter.get("/", async (req, res) => {
     try {
         if (!id) {
             const sections = await Section.find()
-                .select("-__v -createdAt")
+                .select("-createdAt")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .lean()
@@ -24,8 +24,12 @@ sectionRouter.get("/", async (req, res) => {
                 sections: sections, currentPage: page, totalPages: Math.ceil(totalSections / perPage)
             })
         } else {
-            const section = await Section.findById(id).lean()
-            if (!section) return res.status(404).json({error: "Section not found"})
+            const section = await Section
+                .findById(id)
+                .lean()
+
+            if (!section) return res.status(404).json({error: "Нема категорії"})
+
             if (section.products?.length > 0) {
                 await sectionProducts(section)
             }
@@ -50,7 +54,7 @@ sectionRouter.get("/subsections", async (req, res) => {
         if (!id) {
             const totalSubSections = await SubSection.countDocuments()
             const subSections = await SubSection.find()
-                .select("-__v -createdAt")
+                .select("-createdAt")
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .lean()
@@ -60,7 +64,7 @@ sectionRouter.get("/subsections", async (req, res) => {
         } else {
             const subsection = await SubSection.findById(id).lean()
             if (!subsection) {
-                return res.status(404).json({error: "SubSection not found"})
+                return res.status(404).json({error: "Нема підкатегорії"})
             }
 
             const products = await Product.find({section: {$in: subsection._id}}).lean()
