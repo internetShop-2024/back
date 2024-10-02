@@ -9,12 +9,13 @@ const bodyParser = require("body-parser")
 const {port, mongoUri} = require("./vars/privateVars")
 const {limiter, csrfProtection} = require("./vars/publicVars");
 const router = require("./routes/mainRouter")
+const {initSocket} = require("./socket");
 
 const app = express()
+
 app.set('trust proxy', 'loopback, linklocal, uniquelocal')
 app.use(bodyParser.json())
 app.use(cookieParser())
-app.use(csrfProtection)
 app.use(limiter)
 app.use(logger("combined"))
 app.use(json())
@@ -22,9 +23,10 @@ app.use(cors("*"))
 app.use("/", router)
 
 mongoose.connect(mongoUri).then(() => {
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`)
     })
+    initSocket(server)
 }).catch(e => {
     console.error(e)
 })
