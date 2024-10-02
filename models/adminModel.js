@@ -4,17 +4,17 @@ const uniqueValidator = require("mongoose-unique-validator")
 const adminSchema = new mongoose.Schema({
         username: {
             type: String,
-            required: [true, 'Username потрібно вказати'],
+            required: [true, 'Імя користувача потрібно вказати'],
             unique: true
         },
         password: {
             type: String,
-            required: [true, 'Password потрібно вказати'],
+            required: [true, 'Пароль потрібно вказати'],
         },
         calls: [{
             callPhone: {
                 type: String,
-                required: [true, 'Phone потрібно вказати'],
+                required: [true, 'Номер потрібно вказати'],
             },
             createdAt: {
                 type: Date,

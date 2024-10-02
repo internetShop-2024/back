@@ -13,7 +13,10 @@ const blogSchema = new mongoose.Schema({
             type: String,
             required: true
         },
-        image: [String],
+        image: [{
+            imageName: String,
+            imageUrl: String,
+        }],
         video: String,
         sections: {
             type: [mongoose.Schema.Types.ObjectId],
@@ -32,6 +35,8 @@ const blogSchema = new mongoose.Schema({
         versionKey: false
     }
 )
+
+blogSchema.path("image").schema.set('_id', false)
 
 const Blog = mongoose.model("Blog", blogSchema)
 

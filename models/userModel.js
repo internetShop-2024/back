@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema({
             unique: true,
             required: true,
         },
+        deliveryType: {
+            type: String,
+            enum: ["NP", "UKRP"],
+        },
         city: {
             type: String,
         },

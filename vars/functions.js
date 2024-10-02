@@ -15,13 +15,23 @@ const Section = require("../models/sectionModel")
 const Pack = require("../models/packModel")
 
 //ADMIN
-const chooseSection = async (sectionId, subSectionId) => {
-    return (sectionId !== undefined && subSectionId !== undefined)
-        ? (() => {
-            throw new Error("Треба вказати або категорію,або підкатегорію");
-        })()
-        : (sectionId !== undefined ? sectionId : subSectionId);
+const imageNames = async (data) => {
+    let images = []
+    for (const obj of data) {
+        await obj.image.flatMap(image => {
+            images.push(image.imageName)
+        })
+    }
+    return images
 }
+
+const chooseSection = async (sectionId, subSectionId) => {
+    if (sectionId === undefined && subSectionId === undefined)
+        throw new Error("Треба вказати або категорію, або підкатегорію")
+
+    return sectionId !== undefined ? sectionId : subSectionId
+}
+
 
 const convertToArray = async (data) => {
     return data.split(',')
@@ -376,6 +386,7 @@ const packProducts = async (packs) => {
 module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts, reviewsSenders,
+    imageNames,
     //PRODUCTS
     productReviews, productCategory,
     //USERS

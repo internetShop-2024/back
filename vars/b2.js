@@ -1,5 +1,6 @@
 const B2 = require("backblaze-b2")
 const {b2AppId, b2AppKey, b2BukId} = require("./privateVars");
+const {file} = require("backblaze-b2/lib/actions");
 
 const b2 = new B2({
     applicationKeyId: b2AppId,
@@ -31,14 +32,15 @@ const uploadFile = async (file) => {
         await deleteFile(file.originalname)
         const uploadUrlResponse = await b2.getUploadUrl({bucketId: b2BukId})
 
-        await b2.uploadFile({
+        const uploadedFile = await b2.uploadFile({
             uploadUrl: uploadUrlResponse.data.uploadUrl,
             uploadAuthToken: uploadUrlResponse.data.authorizationToken,
             fileName: file.originalname,
             mime: file.mimetype,
             data: file.buffer,
         })
-        return `https://f003.backblazeb2.com/file/InternetMagas2024/${file.originalname.replace(/ /g, '+')}`
+        const imageUrl = `https://f003.backblazeb2.com/file/InternetMagas2024/${file.originalname.replace(/ /g, '+')}`
+        return {imageName: file.originalname, imageUrl}
     } catch (e) {
         throw new Error(e)
     }
@@ -47,13 +49,23 @@ const uploadFile = async (file) => {
 
 const uploadMultipleFiles = async (files) => {
     try {
+        await authenticateB2()
         return await Promise.all(files.map(async (file) => await uploadFile(file)))
     } catch (e) {
         throw new Error(e)
     }
 }
 
+const deleteMultipleFiles = async (files) => {
+    try {
+        await authenticateB2()
+        await Promise.all(files.map(async (file) => await deleteFile(file)))
+    } catch (e) {
+        throw new Error(e)
+    }
+}
+
 module.exports = {
-    authenticateB2,
-    uploadMultipleFiles
+    uploadMultipleFiles,
+    deleteMultipleFiles
 }

@@ -1,10 +1,10 @@
 const mongoose = require("mongoose")
 
 const sectionSchema = new mongoose.Schema({
-        image: {
-            type: [String],
-            required: true,
-        },
+        image: [{
+            imageName: String,
+            imageUrl: String,
+        }],
         name: {
             type: String,
             required: true,
@@ -31,6 +31,8 @@ const sectionSchema = new mongoose.Schema({
         versionKey: false
     }
 )
+
+sectionSchema.path("image").schema.set('_id', false)
 
 const Section = mongoose.model("Section", sectionSchema)
 

@@ -1,3 +1,5 @@
+const mongoose = require("mongoose")
+
 const adminRouter = require("express").Router()
 
 const Admin = require("../models/adminModel")
@@ -15,10 +17,9 @@ const orderUpdateValidator = require("../validators/orderUpdateValidator")
 const productUpdateValidator = require("../validators/productUpdateValidator")
 const packUpdateValidator = require("../validators/packUpdateValidator")
 
-
-const {perPage} = require("../vars/publicVars")
+const {perPage, csrfProtection} = require("../vars/publicVars")
 const upload = require("../vars/multer")
-
+const {uploadMultipleFiles, deleteMultipleFiles} = require("../vars/b2");
 const {
     passwordHash,
     adminTokenAssign,
@@ -34,10 +35,8 @@ const {
     usersHistory,
     historyProducts,
     packProducts,
-    reviewsSenders
+    reviewsSenders, imageNames
 } = require("../vars/functions")
-const mongoose = require("mongoose");
-const {authenticateB2, uploadMultipleFiles} = require("../vars/b2");
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -149,6 +148,8 @@ adminRouter.get("/posts", adminValidator, async (req, res) => {
                 .limit(perPage)
                 .sort(data.sortOptions)
                 .lean()
+
+            if (!posts?.length) return res.status(404).json({message: "Нема постів"})
             return res.status(200).json({
                 posts: posts, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
             })
@@ -319,29 +320,32 @@ adminRouter.post("/login", async (req, res) => {
     }
 })
 
-adminRouter.post('/posts', adminValidator, async (req, res) => {
-    const {title, text, image, video, sections, subSections, display} = req.body
+adminRouter.post('/posts', adminValidator, upload.array("image", 4), async (req, res) => {
+    const {title, text, video, sections, subSections, display} = req.body
+    const images = req.files
 
     try {
+        if (!images?.length || !title || !text) return res.status(400).json({error: "Заповніть всі потрібні поля"})
+
+        const urls = await uploadMultipleFiles(images)
         const newPost = new Blog({
             title: title,
             text: text,
-            image: image,
+            image: urls,
             video: video,
             sections: sections,
             subSections: subSections,
             display: display
         })
         await newPost.save()
-        return res.status(201).json({message: 'Посто успішно створено', post: newPost})
+        return res.status(201).json({message: 'Пост успішно створено', post: newPost})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
 })
 
-adminRouter.post("/packs", adminValidator, async (req, res) => {
+adminRouter.post("/packs", adminValidator, upload.array("image", 4), async (req, res) => {
     const {
-        image,
         article,
         packName,
         price,
@@ -353,14 +357,16 @@ adminRouter.post("/packs", adminValidator, async (req, res) => {
         description,
         quantity
     } = req.body
+
+    const images = req.files
     try {
-        // await authenticateB2()
+        if (!images?.length || !packName || !products?.length) return res.status(400).json({error: "Заповність всі потрібні поля"})
         const result = await chooseSection(sectionId, subSectionId)
 
-        // await image.save()
+        const urls = await uploadMultipleFiles(images)
 
         const pack = new Pack({
-            image: image,
+            image: urls,
             article: article,
             packName: packName,
             price: price,
@@ -383,13 +389,19 @@ adminRouter.post("/packs", adminValidator, async (req, res) => {
 
 adminRouter.post("/products", adminValidator, upload.array("image", 4), async (req, res) => {
     const {
-        image, name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display
+        name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display
     } = req.body
+    const images = req.files
     try {
+        if (!images?.length || !name || !price || !article || !description)
+            return res.status(400).json({error: "Заповніть всі потрібні поля"})
+
         const result = await chooseSection(sectionId, subSectionId)
 
+        const urls = await uploadMultipleFiles(images)
+
         const product = new Product({
-            image: image,
+            image: urls,
             name: name,
             price: price,
             article: article,
@@ -430,7 +442,6 @@ adminRouter.post("/sections", adminValidator, upload.single("image"), async (req
 
         if (products?.length > 0) products.forEach(product => new mongoose.Types.ObjectId(product))
 
-        await authenticateB2()
         const urls = await uploadMultipleFiles([image])
 
         const section = new Section({
@@ -460,7 +471,6 @@ adminRouter.post("/subsections", adminValidator, upload.single('image'), async (
 
         if (await SubSection.findOne({name: name})) return res.status(400).json({message: "Назва зайнята"})
 
-        await authenticateB2()
         const urls = await uploadMultipleFiles([image])
 
         const subSection = new SubSection({
@@ -541,15 +551,19 @@ adminRouter.put("/calls", async (req, res) => {
     }
 })
 
-adminRouter.put('/posts', adminValidator, async (req, res) => {
+adminRouter.put('/posts', adminValidator, upload.array("image", 4), async (req, res) => {
     const {id} = req.query
-    const {title, text, image, video, sections, display} = req.body
+    const {title, text, video, sections, display} = req.body
+    const images = req.files
+
+    let urls
     try {
+        if (images?.length) urls = await uploadMultipleFiles(images)
         await Blog.updateOne(
             {_id: id},
             {
                 $set: {title, text, video, sections, display},
-                $push: {image: image}
+                ...(urls ? {$addToSet: {image: {$each: urls}}} : {})
             }
         )
         return res.status(200).json({message: 'Пост успішно змінено'})
@@ -573,12 +587,16 @@ adminRouter.put("/orders", adminValidator, orderUpdateValidator, async (req, res
     }
 })
 
-adminRouter.put("/packs", adminValidator, packUpdateValidator, async (req, res) => {
-    try {
-        const {id} = req.query
-        const {sectionId, subSectionId} = req.body
-        const {updatedFields, pack} = req
+adminRouter.put("/packs", adminValidator, packUpdateValidator, upload.array("image", 4), async (req, res) => {
+    const {id} = req.query
+    const {sectionId, subSectionId} = req.body
+    const {updatedFields, pack} = req
+    const images = req.files
 
+    try {
+        if (images?.length) {
+            updatedFields.image = await uploadMultipleFiles(images)
+        }
         if (sectionId && sectionId !== pack.section.toString()) {
             const oldSection = pack.section
             await Section.updateOne(
@@ -612,13 +630,9 @@ adminRouter.put("/packs", adminValidator, packUpdateValidator, async (req, res) 
     }
 })
 
-adminRouter.put("/products", adminValidator, productUpdateValidator, async (req, res) => {
+adminRouter.put("/products", adminValidator, upload.array("image", 4), productUpdateValidator, async (req, res) => {
     try {
-        const {history, ...payload} = req.product
-
-        return res.status(200).json({
-            message: "Продукт успішно змінено", product: payload, changes: req.editHistory
-        })
+        return res.status(200).json({message: "Продукт успішно змінено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -709,29 +723,44 @@ adminRouter.delete("/orders", adminValidator, async (req, res) => {
 })
 
 adminRouter.delete('/posts', adminValidator, async (req, res) => {
-    const {id} = req.query
-    try {
-        if (!id) {
-            await Blog.deleteMany()
-        } else {
-            const ids = await convertToArray(id)
-            await Blog.deleteMany({_id: {$in: ids}})
+        const {id} = req.query
+
+        try {
+            if (!id) {
+                const posts = await Blog.find({}, 'image')
+                const images = await imageNames(posts)
+                await deleteMultipleFiles(images)
+                await Blog.deleteMany()
+            } else {
+                const ids = await convertToArray(id)
+                const posts = await Blog.find({_id: {$in: ids}}, 'image')
+                const images = await imageNames(posts)
+                await deleteMultipleFiles(images)
+                await Blog.deleteMany({_id: {$in: ids}})
+            }
+            return res.status(201).json({message: 'Успішно видалено'})
+        } catch
+            (e) {
+            return res.status(500).json({error: e.message})
         }
-        return res.status(201).json({message: 'Успішно видалено'})
-    } catch (e) {
-        return res.status(500).json({error: e.message})
     }
-})
+)
 
 adminRouter.delete('/packs', adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
+            const packs = await Pack.find({}, 'image')
+            const images = await imageNames(packs)
+            await deleteMultipleFiles(images)
             await Pack.deleteMany()
             await Section.updateMany({}, {$set: {packs: []}})
             await SubSection.updateMany({}, {$set: {packs: []}})
         } else {
             const ids = await convertToArray(id)
+            const packs = await Pack.find({_id: {$in: ids}}, 'image')
+            const images = await imageNames(packs)
+            await deleteMultipleFiles(images)
             await Pack.deleteMany({_id: {$in: ids}})
             await Section.updateMany({packs: {$in: ids}}, {$pull: {packs: {$in: ids}}})
             await SubSection.updateMany({packs: {$in: ids}}, {$pull: {packs: {$in: ids}}})
@@ -746,11 +775,17 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
+            const products = await Product.find({}, "image")
+            const images = await imageNames(products)
+            await deleteMultipleFiles(images)
             await Product.deleteMany()
             await Section.updateMany({}, {$pull: {products: {$in: []}}})
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
         } else {
             const ids = await convertToArray(id)
+            const products = await Product.find({_id: {$in: ids}}, "image")
+            const images = await imageNames(products)
+            await deleteMultipleFiles(images)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await SubSection.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await Product.deleteMany({_id: {$in: ids}})
@@ -782,10 +817,16 @@ adminRouter.delete("/sections", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
+            const sections = await Section.find({}, "image")
+            const images = await imageNames(sections)
+            await deleteMultipleFiles(images)
             await Section.deleteMany()
             await Product.updateMany({}, {$set: {section: null}})
         } else {
             const ids = await convertToArray(id)
+            const sections = await Section.find({_id: {$in: ids}}, "image")
+            const images = await imageNames(sections)
+            await deleteMultipleFiles(images)
             await Section.deleteMany({_id: {$in: ids}})
             await Product.updateMany({section: {$in: ids}}, {$set: {section: null}})
         }
@@ -799,10 +840,16 @@ adminRouter.delete("/subsections", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
+            const sections = await SubSection.find({}, "image")
+            const images = await imageNames(sections)
+            await deleteMultipleFiles(images)
             await SubSection.deleteMany()
             await Section.updateMany({}, {$set: {subSections: []}})
         } else {
             const ids = await convertToArray(id)
+            const sections = await SubSection.find({_id: {$in: ids}}, "image")
+            const images = await imageNames(sections)
+            await deleteMultipleFiles(images)
             await SubSection.deleteMany({_id: {$in: ids}})
             await Section.updateMany({subSections: {$in: ids}}, {$pull: {subSections: {$in: ids}}})
         }

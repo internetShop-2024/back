@@ -6,12 +6,21 @@ const packSchema = new mongoose.Schema({
             required: true,
             unique: true
         },
-        image: String,
+        image: [{
+            imageName: String,
+            imageUrl: String,
+        }],
         video: String,
         description: String,
-        quantity: Number,
+        quantity: {
+            type: Number,
+            required: true
+        },
         article: String,
-        price: Number,
+        price: {
+            type: Number,
+            required: true
+        },
         section: mongoose.Schema.Types.ObjectId,
         products: [{
             product: {
@@ -38,6 +47,7 @@ const packSchema = new mongoose.Schema({
 )
 
 packSchema.path("products").schema.set('_id', false)
+packSchema.path("image").schema.set('_id', false)
 
 const Pack = mongoose.model("Pack", packSchema)
 

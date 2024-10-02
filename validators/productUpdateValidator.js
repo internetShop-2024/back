@@ -1,13 +1,14 @@
 const Product = require("../models/productModel");
+const {uploadMultipleFiles} = require("../vars/b2");
 
 const productUpdateValidator = async (req, res, next) => {
     let editHistory = []
-    const id = req.query.id
+    const {id} = req.query
+    const images = req.files
     try {
         const product = await Product.findById(id)
-        if (!product) {
-            return res.status(404).json({error: "Product not found"})
-        }
+        if (!product) return res.status(404).json({error: "Product not found"})
+
 
         const fieldsToUpdate = [
             'name', 'photo', 'price', 'article', 'description',
@@ -31,6 +32,14 @@ const productUpdateValidator = async (req, res, next) => {
             await Product.updateOne(
                 {_id: id},
                 {$push: {history: {$each: editHistory}}}
+            )
+        }
+
+        if (images?.length) {
+            const urls = await uploadMultipleFiles(images)
+            await Product.updateOne(
+                {_id: id},
+                {$addToSet: {image: {$each: urls}}}
             )
         }
 
