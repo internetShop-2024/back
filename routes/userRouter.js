@@ -11,6 +11,7 @@ const {passwordHash, tokenAssign, convertToArray, historyProducts} = require("..
 const registerValidator = require("../validators/registerValidator")
 const authValidator = require("../validators/authValidator")
 const authorizationValidator = require("../validators/loginValidator")
+const Chat = require("../models/chatModel");
 
 userRouter.get("/profile", authValidator, async (req, res) => {
     try {
@@ -74,6 +75,23 @@ userRouter.get("/favorite", authValidator, async (req, res) => {
         return res.status(200).json({
             favorite: favorite, currentPage: page, totalPages: Math.ceil(totalFavorite / perPage)
         })
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+userRouter.get("/chat", authValidator, async (req, res) => {
+    try {
+        const user = await User
+            .findById(req.userId)
+            .select()
+            .lean()
+
+        console.log(user)
+        if (!user?.chat) return res.status(404).json({error: "Нема чату"})
+        const chat = await Chat.findById(user.chat).lean()
+
+        return res.status(200).json({chat: chat})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

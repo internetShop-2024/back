@@ -22,6 +22,10 @@ const adminSchema = new mongoose.Schema({
             },
             text: String
         }],
+        chat: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "Chat"
+        },
         createdAt: {
             type: Date,
             default: Date.now()

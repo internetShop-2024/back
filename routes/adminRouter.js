@@ -11,6 +11,7 @@ const Product = require("../models/productModel")
 const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 const Pack = require("../models/packModel")
+const Chat = require("../models/chatModel")
 
 const adminValidator = require("../validators/adminValidator")
 const orderUpdateValidator = require("../validators/orderUpdateValidator")
@@ -282,7 +283,7 @@ adminRouter.post("/create", async (req, res) => {
             password: await passwordHash(password)
         })
 
-        const AT = adminTokenAssign(newAdmin)
+        const AT = adminTokenAssign(newAdmin._id)
 
         await newAdmin.save()
 
@@ -309,7 +310,7 @@ adminRouter.post("/login", async (req, res) => {
         if (!await passwordCompare(admin.password, password))
             return res.status(400).json({error: "Недійсне ім'я користувача або пароль"})
 
-        const AT = adminTokenAssign(admin)
+        const AT = adminTokenAssign(admin._id)
 
         return res.status(201).json({
             message: "Successfully",
@@ -727,13 +728,13 @@ adminRouter.delete('/posts', adminValidator, async (req, res) => {
 
         try {
             if (!id) {
-                const posts = await Blog.find({}, 'image')
+                const posts = await Blog.find({}, 'image').lean()
                 const images = await imageNames(posts)
                 await deleteMultipleFiles(images)
                 await Blog.deleteMany()
             } else {
                 const ids = await convertToArray(id)
-                const posts = await Blog.find({_id: {$in: ids}}, 'image')
+                const posts = await Blog.find({_id: {$in: ids}}, 'image').lean()
                 const images = await imageNames(posts)
                 await deleteMultipleFiles(images)
                 await Blog.deleteMany({_id: {$in: ids}})
@@ -750,7 +751,7 @@ adminRouter.delete('/packs', adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const packs = await Pack.find({}, 'image')
+            const packs = await Pack.find({}, 'image').lean()
             const images = await imageNames(packs)
             await deleteMultipleFiles(images)
             await Pack.deleteMany()
@@ -758,7 +759,7 @@ adminRouter.delete('/packs', adminValidator, async (req, res) => {
             await SubSection.updateMany({}, {$set: {packs: []}})
         } else {
             const ids = await convertToArray(id)
-            const packs = await Pack.find({_id: {$in: ids}}, 'image')
+            const packs = await Pack.find({_id: {$in: ids}}, 'image').lean()
             const images = await imageNames(packs)
             await deleteMultipleFiles(images)
             await Pack.deleteMany({_id: {$in: ids}})
@@ -775,7 +776,7 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const products = await Product.find({}, "image")
+            const products = await Product.find({}, "image").lean()
             const images = await imageNames(products)
             await deleteMultipleFiles(images)
             await Product.deleteMany()
@@ -783,7 +784,7 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
         } else {
             const ids = await convertToArray(id)
-            const products = await Product.find({_id: {$in: ids}}, "image")
+            const products = await Product.find({_id: {$in: ids}}, "image").lean()
             const images = await imageNames(products)
             await deleteMultipleFiles(images)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
@@ -817,14 +818,14 @@ adminRouter.delete("/sections", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const sections = await Section.find({}, "image")
+            const sections = await Section.find({}, "image").lean()
             const images = await imageNames(sections)
             await deleteMultipleFiles(images)
             await Section.deleteMany()
             await Product.updateMany({}, {$set: {section: null}})
         } else {
             const ids = await convertToArray(id)
-            const sections = await Section.find({_id: {$in: ids}}, "image")
+            const sections = await Section.find({_id: {$in: ids}}, "image").lean()
             const images = await imageNames(sections)
             await deleteMultipleFiles(images)
             await Section.deleteMany({_id: {$in: ids}})
@@ -840,20 +841,46 @@ adminRouter.delete("/subsections", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const sections = await SubSection.find({}, "image")
+            const sections = await SubSection.find({}, "image").lean()
             const images = await imageNames(sections)
             await deleteMultipleFiles(images)
             await SubSection.deleteMany()
             await Section.updateMany({}, {$set: {subSections: []}})
         } else {
             const ids = await convertToArray(id)
-            const sections = await SubSection.find({_id: {$in: ids}}, "image")
+            const sections = await SubSection.find({_id: {$in: ids}}, "image").lean()
             const images = await imageNames(sections)
             await deleteMultipleFiles(images)
             await SubSection.deleteMany({_id: {$in: ids}})
             await Section.updateMany({subSections: {$in: ids}}, {$pull: {subSections: {$in: ids}}})
         }
         return res.status(201).json({message: "Успішно видалено"})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.delete("/chats", adminValidator, async (req, res) => {
+    const {id} = req.query
+    try {
+        if (!id) {
+            let images
+            const chats = await Chat.find({}, "messages.image").lean()
+            for (let chat of chats) {
+                console.log(c)
+                images = await imageNames(chat)
+            }
+            console.log(images)
+            await Chat.deleteMany({})
+            await User.updateMany({}, {$set: {chat: null}})
+            await Admin.updateMany({}, {$set: {chat: []}})
+        } else {
+            const ids = await convertToArray(id)
+            await Chat.deleteMany({_id: {$in: ids}})
+            await User.updateMany({chat: {$in: ids}}, {$set: {chat: null}})
+            await Admin.updateMany({chat: {$in: ids}}, {$set: {chat: []}})
+        }
+        return res.status(201).json({message: "Чати успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

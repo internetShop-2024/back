@@ -11,7 +11,7 @@ const adminValidator = async (req, res, next) => {
         if (!admin)
             return res.status(401).json({error: 'Unauthorized'})
 
-        req.adminId = admin._id
+        req.adminId = admin.id
         next()
     } catch (e) {
         return res.status(400).json({error: e.message})

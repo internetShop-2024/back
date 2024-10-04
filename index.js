@@ -7,7 +7,7 @@ const cookieParser = require("cookie-parser")
 const bodyParser = require("body-parser")
 
 const {port, mongoUri} = require("./vars/privateVars")
-const {limiter, csrfProtection} = require("./vars/publicVars");
+const {limiter} = require("./vars/publicVars");
 const router = require("./routes/mainRouter")
 const {initSocket} = require("./socket");
 

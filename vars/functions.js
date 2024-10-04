@@ -243,11 +243,7 @@ const tokenAssign = (data, generateRT = true) => {
 };
 
 const adminTokenAssign = (data) => {
-    if (data instanceof mongoose.Document) {
-        data = data.toObject()
-    }
-    const {password, createdAt, ...payload} = data
-    return jwt.sign(payload, secretAT, {expiresIn: "24h"})
+    return jwt.sign({id: data}, secretAT, {expiresIn: "24h"})
 }
 
 const validateToken = async (token, secret) => {

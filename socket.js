@@ -9,14 +9,20 @@ const initSocket = (server) => {
     })
 
     io.on('connection', async (socket) => {
-        const token = socket.handshake.query.token
-        const decoded = await validateToken(token, "JWT")
+        let token = socket.handshake.query.token
+        let decoded = await validateToken(token, "JWT")
         if (!decoded) {
-            console.log('Unauthorized access')
+            const tokenMatch = socket.handshake.query.token.match(/accessToken=([^;]+)/)
+            token = tokenMatch ? tokenMatch[1] : null
+            decoded = await validateToken(token, "AT")
+        }
+
+        if (!decoded) {
             socket.disconnect()
         } else {
-            console.log("connected")
+            socket.emit("connected")
             socket.on("message", (msg) => {
+
                 io.emit("message", msg)
             })
         }
