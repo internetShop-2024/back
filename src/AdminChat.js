@@ -27,9 +27,9 @@ const AdminChat = () => {
         }
 
         socket?.on("message", (msg) => {
-            console.log(msg)
             setMessages((prevMessages) => [...prevMessages, msg])
         })
+
         return () => {
             socket?.disconnect();
         };
@@ -110,13 +110,17 @@ const AdminChat = () => {
             {isLoggedIn && (
                 <>
                     <div style={{width: '30%', borderRight: '1px solid #ccc', padding: '10px'}}>
-                        <h2>Чати</h2>
+                        <h2 onClick={() => fetchChats(accToken)}>Чати</h2>
                         <ul>
-                            {chats.map((chat, index) => (
-                                <li key={index} onClick={() => handleChatSelect(chat)} style={{cursor: 'pointer'}}>
-                                    {chat.chatName}
-                                </li>
-                            ))}
+                            {chats && chats.length > 0 ? (
+                                chats.map((chat, index) => (
+                                    <li key={index} onClick={() => handleChatSelect(chat)} style={{cursor: 'pointer'}}>
+                                        {chat.chatName}
+                                    </li>
+                                ))
+                            ) : (
+                                <li>Немає чатів</li>
+                            )}
                         </ul>
                     </div>
                     <div style={{padding: '10px', width: '70%'}}>
@@ -125,10 +129,11 @@ const AdminChat = () => {
                                 <h3>{selectedChat.chatName}</h3>
                                 <div>
                                     {messages.map((msg, index) => (
-                                        <div key={index} style={{ color: msg.sender === user ? 'green' : 'red' }}>
-                                            {msg.image ? (
+                                        <div key={index} style={{color: msg.sender === user ? 'green' : 'red'}}>
+                                            {msg.image?.length > 0 ? (
                                                 <div>
-                                                    <img src={msg.image} alt="" style={{maxWidth: '200px'}}/>
+                                                    <img src={msg.image[0].imageUrl} alt={msg.image[0].imageName}
+                                                         style={{maxWidth: '200px'}}/>
                                                     <p>{msg.text}</p>
                                                 </div>
                                             ) : (

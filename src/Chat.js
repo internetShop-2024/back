@@ -75,13 +75,16 @@ const ChatComponent = () => {
                         }
                     }
                 ).then(res => {
-                    setChat(res.data.chat)
-                    setMessages(res.data.chat.messages)
+                    const chat = res.data.chat
+                    setChat(chat)
+                    setMessages(chat.messages)
+                    setMessage('')
+                    socket.disconnect()
+                    socket.connect()
                 }).catch(err => {
                     console.error(err)
                 })
             } else {
-                console.log(user)
                 socket.emit('message', message);
                 setMessage('');
             }
@@ -99,13 +102,20 @@ const ChatComponent = () => {
                 <h2>{chat ? chat?.chatName : "Chat"}</h2>
                 <div>
                     {messages.map((msg, index) => (
-                        <div key={index} style={{ color: msg.sender === user ? 'green' : 'red' }}>
-                            {msg.image && <img src={msg.image} alt="" style={{maxWidth: '200px'}}/>}
-
-                            {msg.text && <p>{msg.text}</p>}
+                        <div key={index} style={{color: msg.sender === user ? 'green' : 'red'}}>
+                            {msg.image?.length > 0 ? (
+                                <div>
+                                    <img src={msg.image[0].imageUrl} alt={msg.image[0].imageName}
+                                         style={{maxWidth: '200px'}}/>
+                                    <p>{msg.text}</p>
+                                </div>
+                            ) : (
+                                <p>{msg.text}</p>
+                            )}
                         </div>
                     ))}
                 </div>
+
 
                 <input
                     type="text"
