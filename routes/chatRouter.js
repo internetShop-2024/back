@@ -15,6 +15,8 @@ chatRouter.post("/", authValidator, upload.single("image"), async (req, res) => 
     const userId = req.userId
     try {
         let message = {}
+        const user = await User.findById(userId, 'fullname phone').lean()
+        if (!user) return res.status(404).json({error: "Нема такого користувача"})
         if (text || image) {
             message = {
                 text: text,
@@ -22,20 +24,18 @@ chatRouter.post("/", authValidator, upload.single("image"), async (req, res) => 
                 sendAt: Date.now(),
             }
             if (image) {
-                const urls = await uploadMultipleFiles([image])
-                message.image = urls[0]
+                message.image = await uploadMultipleFiles([image])
             }
         }
 
-        const admins = await Admin.find({}, "_id").lean()
         const chat = new Chat({
-            user: userId,
-            admins: admins,
+            chatName: user.fullname + "/" + user.phone,
+            user: user._id,
             messages: [message],
         })
 
         await chat.save()
-        await Admin.updateMany({_id: {$in: admins}}, {$push: {chat: chat}})
+        await Admin.updateMany({}, {$push: {chat: chat}})
         await User.updateOne({_id: userId}, {$set: {chat: chat}})
         return res.status(201).json({chat: chat})
     } catch (e) {

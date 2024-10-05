@@ -1,23 +1,22 @@
 const mongoose = require('mongoose')
 
 const chatSchema = new mongoose.Schema({
+        chatName: {
+            type: String,
+            required: true,
+        },
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true,
             unique: true
         },
-        admins: {
-            type: [mongoose.Schema.Types.ObjectId],
-            ref: 'Admin',
-            required: true,
-        },
         messages: [{
             text: String,
-            image: {
+            image: [{
                 imageName: String,
                 imageUrl: String,
-            },
+            }],
             sender: mongoose.Schema.Types.ObjectId,
             sendAt: Date
         }],
@@ -31,6 +30,7 @@ const chatSchema = new mongoose.Schema({
 )
 
 chatSchema.path("messages").schema.set("_id", false)
+chatSchema.path("messages.image").schema.set("_id", false)
 
 const Chat = mongoose.model("Chat", chatSchema)
 

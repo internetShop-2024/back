@@ -84,10 +84,9 @@ userRouter.get("/chat", authValidator, async (req, res) => {
     try {
         const user = await User
             .findById(req.userId)
-            .select()
+            .select('chat')
             .lean()
 
-        console.log(user)
         if (!user?.chat) return res.status(404).json({error: "Нема чату"})
         const chat = await Chat.findById(user.chat).lean()
 

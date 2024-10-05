@@ -38,6 +38,7 @@ const {
     packProducts,
     reviewsSenders, imageNames
 } = require("../vars/functions")
+const url = require("node:url");
 
 //GET
 adminRouter.get("/users", adminValidator, async (req, res) => {
@@ -264,6 +265,20 @@ adminRouter.get("/products", adminValidator, async (req, res) => {
 
             return res.status(200).json({product: product})
         }
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+adminRouter.get("/chats", adminValidator, async (req, res) => {
+    try {
+        const chats = await Chat
+            .find({})
+            .select("-messages")
+            .lean()
+
+        if (!chats?.length) return res.status(404).json({error: "Нема чатів"})
+        return res.status(200).json({chats: chats})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
@@ -864,19 +879,24 @@ adminRouter.delete("/chats", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            let images
             const chats = await Chat.find({}, "messages.image").lean()
-            for (let chat of chats) {
-                console.log(c)
-                images = await imageNames(chat)
-            }
-            console.log(images)
+            if (!chats?.length) return res.status(404).json({error: "Нема чатів"})
+
+            const allMessages = chats.map(chat => chat.messages).flat()
+            const urls = await imageNames(allMessages)
             await Chat.deleteMany({})
+            await deleteMultipleFiles(urls)
             await User.updateMany({}, {$set: {chat: null}})
             await Admin.updateMany({}, {$set: {chat: []}})
         } else {
             const ids = await convertToArray(id)
+            const chats = await Chat.find({_id: {$in: ids}})
+            if (!chats?.length) return res.status(404).json({error: "Нема чатів"})
+
+            const allMessages = chats.map(chat => chat.messages).flat()
+            const urls = await imageNames(allMessages)
             await Chat.deleteMany({_id: {$in: ids}})
+            await deleteMultipleFiles(urls)
             await User.updateMany({chat: {$in: ids}}, {$set: {chat: null}})
             await Admin.updateMany({chat: {$in: ids}}, {$set: {chat: []}})
         }

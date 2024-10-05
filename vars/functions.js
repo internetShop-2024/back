@@ -16,13 +16,17 @@ const Pack = require("../models/packModel")
 
 //ADMIN
 const imageNames = async (data) => {
-    let images = []
-    for (const obj of data) {
-        await obj.image.flatMap(image => {
-            images.push(image.imageName)
-        })
+    try {
+        let images = []
+        for (const obj of data) {
+            await obj.image.flatMap(image => {
+                images.push(image.imageName)
+            })
+        }
+        return images
+    } catch (e) {
+        throw new Error(e.message)
     }
-    return images
 }
 
 const chooseSection = async (sectionId, subSectionId) => {
