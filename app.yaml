@@ -2,3 +2,11 @@ runtime: nodejs20
 automatic_scaling:
   min_instances: 1
   max_instances: 2
+
+handlers:
+  - url: /chats/expires
+    script: auto
+    login: admin
+
+  - url: /.*
+    script: auto

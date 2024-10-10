@@ -7,7 +7,8 @@ const Admin = require("../models/adminModel")
 const authValidator = require("../validators/authValidator")
 
 const upload = require("../vars/multer")
-const {uploadMultipleFiles} = require("../vars/b2")
+const {uploadMultipleFiles, deleteMultipleFiles} = require("../vars/b2")
+const {imageNames} = require("../vars/functions");
 
 chatRouter.post("/", authValidator, upload.single("image"), async (req, res) => {
     const {text} = req.body
@@ -38,6 +39,22 @@ chatRouter.post("/", authValidator, upload.single("image"), async (req, res) => 
         await Admin.updateMany({}, {$push: {chat: chat}})
         await User.updateOne({_id: userId}, {$set: {chat: chat}})
         return res.status(201).json({chat: chat})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
+    }
+})
+
+chatRouter.get("/expires", async (req, res) => {
+    try {
+        // const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        const oneWeekAgo = new Date(Date.now() - 60 * 1000)
+        const chats = await Chat.find({createdAt: {$lt: oneWeekAgo}}, "messages.image").lean()
+        const allMessages = chats.map(chat => chat.messages).flat()
+        const urls = await imageNames(allMessages)
+
+        await Chat.deleteMany({createdAt: {$lt: oneWeekAgo}})
+        await deleteMultipleFiles(urls)
+        return res.status(200).json({message: "Successfully expired"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

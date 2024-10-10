@@ -1,0 +1,5 @@
+cron:
+#  - description: "Expire chats daily"
+#    url: /chats/expires
+#    schedule: every 2 minutes
+#    timezone: Etc/UTC

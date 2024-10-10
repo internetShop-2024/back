@@ -15,7 +15,6 @@
 .env.example
 Alan.postman_collection.json
 test.html
-socket.js
 
 # Node.js dependencies:
 node_modules/
