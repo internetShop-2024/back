@@ -1,42 +1,48 @@
 const mongoose = require("mongoose")
 const productSchema = new mongoose.Schema({
-        image: [{
-            imageName: String,
-            imageUrl: String,
+        models: [{
+            image: [{
+                imageName: String,
+                imageUrl: String,
+            }],
+            name: {
+                type: String,
+                required: true,
+                unique: true
+            },
+            price: {
+                type: Number,
+                required: true
+            },
+            quantity: {
+                type: Number,
+                default: 0
+            },
+            promotion: {
+                isActive: {
+                    type: Boolean,
+                    default: false
+                },
+                newPrice: Number,
+            },
+            display: {
+                type: Boolean,
+                default: true
+            },
+            description: {
+                type: String,
+                required: true
+            },
+            characteristics: String,
         }],
-        name: {
-            type: String,
-            required: true,
-            unique: true
-        },
-        price: {
-            type: Number,
-            required: true
-        },
         article: {
             type: Number,
             required: true
         },
-        description: {
-            type: String,
-            required: true
-        },
-        characteristics: String,
         video: String,
         reviews: {
             type: [mongoose.Schema.Types.ObjectId],
             ref: "Review"
-        },
-        promotion: {
-            isActive: {
-                type: Boolean,
-                default: false
-            },
-            newPrice: Number,
-        },
-        quantity: {
-            type: Number,
-            default: 0
         },
         rate: {
             type: Number,
@@ -49,10 +55,6 @@ const productSchema = new mongoose.Schema({
             newValue: mongoose.Schema.Types.Mixed,
             editedAt: Date
         }],
-        display: {
-            type: Boolean,
-            default: true
-        },
         createdAt: {
             type: Date,
             default: Date.now()
@@ -69,7 +71,8 @@ productSchema.pre('save', function (next) {
     next()
 })
 productSchema.path("history").schema.set('_id', false)
-productSchema.path("image").schema.set('_id', false)
+productSchema.path("models.image").schema.set('_id', false)
+productSchema.path("models").schema.set('_id', true)
 
 const Product = mongoose.model("Product", productSchema)
 

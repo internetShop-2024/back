@@ -2,7 +2,7 @@ const productRouter = require("express").Router()
 
 const Product = require("../models/productModel")
 
-const {productReviews, filterSystem, productCategory} = require("../vars/functions")
+const {productReviews, filterSystem, productCategory, modelsFilter} = require("../vars/functions")
 const {perPage} = require("../vars/publicVars")
 
 //GET
@@ -19,8 +19,9 @@ productRouter.get("/", async (req, res) => {
             if (req.query.sectionId !== undefined && req.query.subSectionId !== undefined)
                 return res.status(400).json({error: "Шось пішло не так"})
 
-                await filterSystem(newObject)
-            data.payload["display"] = true
+            const data = await filterSystem(newObject)
+            await modelsFilter(data)
+            data.payload["models.display"] = true
             const totalProducts = await Product.countDocuments()
             const products = await Product.find(data.payload)
                 .select("-history")

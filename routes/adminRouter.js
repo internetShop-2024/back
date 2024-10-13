@@ -405,7 +405,7 @@ adminRouter.post("/packs", adminValidator, upload.array("image", 4), async (req,
 
 adminRouter.post("/products", adminValidator, upload.array("image", 4), async (req, res) => {
     const {
-        name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display
+        name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display, characteristics
     } = req.body
     const images = req.files
     try {
@@ -417,16 +417,19 @@ adminRouter.post("/products", adminValidator, upload.array("image", 4), async (r
         const urls = await uploadMultipleFiles(images)
 
         const product = new Product({
-            image: urls,
-            name: name,
-            price: price,
+            models: [{
+                image: urls,
+                name: name,
+                price: price,
+                quantity: quantity,
+                promotion: promotion,
+                display: display,
+                description: description,
+                characteristics: characteristics
+            }],
             article: article,
-            description: description,
-            promotion: promotion,
-            quantity: quantity,
             section: result,
             video: video,
-            display: display
         })
 
         if (sectionId) {
@@ -655,39 +658,44 @@ adminRouter.put("/products", adminValidator, upload.array("image", 4), productUp
 })
 
 adminRouter.put("/promotion", adminValidator, async (req, res) => {
-        const {discount, isActive} = req.body
-        const {id} = req.query
-        try {
-            if (!id) return res.status(404).json({error: "Вкажіть категорію"})
-            const section = await Section
-                .findById(id)
-                .select('products')
-                .lean()
+    const {discount, isActive} = req.body
+    const {id} = req.query
+    try {
+        if (!id) return res.status(404).json({error: "Вкажіть категорію"})
 
-            const products = await Product
-                .find({_id: {$in: section.products}})
-                .select('price promotion')
-                .lean()
+        const section = await Section.findById(id).select('products').lean()
+        const products = await Product.find({_id: {$in: section.products}}).lean()
 
-            const bulkOperations = products.map(product => {
-                const newPrice = discount ? product.price * discount : product.promotion.newPrice
+        const bulkOperations = []
+
+        for (const product of products) {
+            const models = product.models.map(model => {
+                const newPrice = discount ? model.price * (1 - discount / 100) : model.promotion.newPrice
                 return {
-                    updateOne: {
-                        filter: {_id: product._id}, update: {
-                            $set: {
-                                'promotion.isActive': isActive, ...(discount && {'promotion.newPrice': newPrice})
-                            }
-                        }
+                    ...model,
+                    promotion: {
+                        isActive: isActive,
+                        discount: discount || model.promotion.discount,
+                        newPrice: newPrice
                     }
                 }
             })
-            await Product.bulkWrite(bulkOperations)
-            return res.status(200).json({message: "Знижки добавлено"})
-        } catch (e) {
-            return res.status(500).json({error: e.message})
+
+            bulkOperations.push({
+                updateOne: {
+                    filter: {_id: product._id},
+                    update: {$set: {models: models}}
+                }
+            })
         }
+
+        await Product.bulkWrite(bulkOperations)
+        return res.status(200).json({message: "Знижки добавлено"})
+    } catch (e) {
+        return res.status(500).json({error: e.message})
     }
-)
+})
+
 
 //DELETE
 adminRouter.delete("/users", adminValidator, async (req, res) => {
@@ -791,7 +799,7 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const products = await Product.find({}, "image").lean()
+            const products = await Product.find({}, "models.image").lean()
             const images = await imageNames(products)
             await deleteMultipleFiles(images)
             await Product.deleteMany()
@@ -799,7 +807,7 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
         } else {
             const ids = await convertToArray(id)
-            const products = await Product.find({_id: {$in: ids}}, "image").lean()
+            const products = await Product.find({_id: {$in: ids}}, "models.image").lean()
             const images = await imageNames(products)
             await deleteMultipleFiles(images)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})

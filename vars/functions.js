@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken')
-const mongoose = require("mongoose")
 const axios = require("axios");
 const {Parser} = require("json2csv")
 
@@ -18,11 +17,17 @@ const Pack = require("../models/packModel")
 const imageNames = async (data) => {
     try {
         let images = []
+
         for (const obj of data) {
-            await obj.image.flatMap(image => {
-                images.push(image.imageName)
-            })
+            if (obj.image) images.push(...obj.image.map(image => image.imageName))
+            if (Array.isArray(obj.models)) {
+                for (const model of obj.models) {
+                    console.log(model)
+                    images.push(...model.image.map(image => image.imageName))
+                }
+            }
         }
+
         return images
     } catch (e) {
         throw new Error(e.message)
@@ -43,6 +48,22 @@ const convertToArray = async (data) => {
 
 const convertToBool = async (value) => {
     return value === "1" ? true : value === '0' ? false : value
+}
+
+const convertKeys = async (keys, data) => {
+    const allowedParams = ['article', 'video', 'rate', 'section', 'history', 'createdAt']
+    for (const key in keys) {
+        if (!allowedParams.includes(key)) {
+            data.payload[`models.${key}`] = data.payload[key]
+            delete data.payload[key]
+        }
+    }
+}
+
+const modelsFilter = async (data) => {
+    if (data.payload) convertKeys(data.payload, data)
+    if (data.sortOptions) convertKeys(data.sortOptions, data)
+    return data
 }
 
 const filterSystem = async (data) => {
@@ -386,7 +407,7 @@ const packProducts = async (packs) => {
 module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts, reviewsSenders,
-    imageNames,
+    imageNames, modelsFilter,
     //PRODUCTS
     productReviews, productCategory,
     //USERS
