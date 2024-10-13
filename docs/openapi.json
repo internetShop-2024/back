@@ -3039,7 +3039,7 @@
           "Admin"
         ],
         "summary": "Оновити продукт",
-        "description": "Цей ендпоінт дозволяє адміністраторам оновлювати деталі продукту. Для оновлення продукту потрібно вказати ID продукту та нові дані.",
+        "description": "Цей ендпоінт дозволяє адміністраторам оновлювати деталі продукту, включаючи моделі продукту. Для оновлення продукту потрібно вказати ID продукту та нові дані.",
         "parameters": [
           {
             "name": "id",
@@ -3050,6 +3050,16 @@
               "type": "string",
               "example": "603c6b2f7f2e1b001f64792b"
             }
+          },
+          {
+            "name": "modelId",
+            "in": "query",
+            "required": false,
+            "description": "ID моделі продукту, яку потрібно оновити. Якщо вказано, оновлюються лише поля моделі.",
+            "schema": {
+              "type": "string",
+              "example": "603c6b2f7f2e1b001f64792c"
+            }
           }
         ],
         "requestBody": {
@@ -3059,261 +3069,231 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "photo": {
-                    "type": "string",
-                    "description": "Посилання на зображення продукту.",
-                    "example": "https://example.com/photo.jpg"
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "Назва продукту.",
-                    "example": "Новий продукт"
-                  },
-                  "price": {
-                    "type": "number",
-                    "description": "Ціна продукту.",
-                    "example": 19.99
-                  },
-                  "article": {
-                    "type": "string",
-                    "description": "Артикул продукту.",
-                    "example": "ABC123"
-                  },
-                  "description": {
-                    "type": "string",
-                    "description": "Опис продукту.",
-                    "example": "Детальний опис продукту."
-                  },
-                  "promotion": {
-                    "type": "string",
-                    "description": "Інформація про акцію або знижку.",
-                    "example": "Знижка 10% до кінця місяця"
-                  },
-                  "quantity": {
-                    "type": "integer",
-                    "description": "Кількість продукту на складі.",
-                    "example": 100
-                  },
-                  "sectionId": {
-                    "type": "string",
-                    "description": "ID секції, до якої належить продукт.",
-                    "example": "603c6b2f7f2e1b001f64792c"
-                  },
-                  "subSectionId": {
-                    "type": "string",
-                    "description": "ID підсекції, до якої належить продукт.",
-                    "example": "603c6b2f7f2e1b001f64792d"
-                  }
-                }
-              },
-              "example": {
-                "photo": "https://example.com/photo.jpg",
-                "name": "Новий продукт",
-                "price": 19.99,
-                "article": "ABC123",
-                "description": "Детальний опис продукту.",
-                "promotion": "Знижка 10% до кінця місяця",
-                "quantity": 100,
-                "sectionId": "603c6b2f7f2e1b001f64792c",
-                "subSectionId": "603c6b2f7f2e1b001f64792d"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Продукт успішно оновлено",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "description": "Повідомлення про успішне оновлення продукту.",
-                      "example": "Product successfully updated"
-                    },
-                    "product": {
+                  "models": {
+                    "type": "array",
+                    "items": {
                       "type": "object",
-                      "description": "Оновлений продукт.",
                       "properties": {
-                        "photo": {
-                          "type": "string",
-                          "description": "Посилання на зображення продукту.",
-                          "example": "https://example.com/photo.jpg"
+                        "image": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "imageName": {
+                                "type": "string",
+                                "description": "Назва зображення.",
+                                "example": "image1.jpg"
+                              },
+                              "imageUrl": {
+                                "type": "string",
+                                "description": "URL зображення.",
+                                "example": "https://example.com/image1.jpg"
+                              }
+                            }
+                          }
                         },
                         "name": {
                           "type": "string",
-                          "description": "Назва продукту.",
-                          "example": "Новий продукт"
+                          "description": "Назва моделі.",
+                          "example": "Модель 1"
                         },
                         "price": {
                           "type": "number",
-                          "description": "Ціна продукту.",
+                          "description": "Ціна моделі.",
                           "example": 19.99
-                        },
-                        "article": {
-                          "type": "string",
-                          "description": "Артикул продукту.",
-                          "example": "ABC123"
-                        },
-                        "description": {
-                          "type": "string",
-                          "description": "Опис продукту.",
-                          "example": "Детальний опис продукту."
-                        },
-                        "promotion": {
-                          "type": "string",
-                          "description": "Інформація про акцію або знижку.",
-                          "example": "Знижка 10% до кінця місяця"
                         },
                         "quantity": {
                           "type": "integer",
-                          "description": "Кількість продукту на складі.",
+                          "description": "Кількість моделі на складі.",
                           "example": 100
                         },
-                        "sectionId": {
-                          "type": "string",
-                          "description": "ID секції, до якої належить продукт.",
-                          "example": "603c6b2f7f2e1b001f64792c"
+                        "promotion": {
+                          "type": "object",
+                          "properties": {
+                            "isActive": {
+                              "type": "boolean",
+                              "description": "Чи активна знижка.",
+                              "example": true
+                            },
+                            "newPrice": {
+                              "type": "number",
+                              "description": "Нова ціна моделі зі знижкою.",
+                              "example": 17.99
+                            }
+                          }
                         },
-                        "subSectionId": {
+                        "description": {
                           "type": "string",
-                          "description": "ID підсекції, до якої належить продукт.",
-                          "example": "603c6b2f7f2e1b001f64792d"
-                        }
-                      },
-                      "required": [
-                        "photo",
-                        "name",
-                        "price",
-                        "article",
-                        "description",
-                        "promotion",
-                        "quantity",
-                        "sectionId",
-                        "subSectionId"
-                      ]
-                    },
-                    "changes": {
-                      "type": "object",
-                      "description": "Історія змін продукту.",
-                      "properties": {
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Дата та час останнього оновлення.",
-                          "example": "2024-09-11T12:00:00Z"
+                          "description": "Опис моделі.",
+                          "example": "Детальний опис моделі."
                         },
-                        "changedFields": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "description": "Список змінених полів."
-                          },
-                          "example": [
-                            "price",
-                            "description"
-                          ]
+                        "characteristics": {
+                          "type": "string",
+                          "description": "Характеристики моделі."
                         }
                       }
                     }
                   },
-                  "required": [
-                    "message",
-                    "product",
-                    "changes"
-                  ]
-                },
-                "example": {
-                  "message": "Product successfully updated",
-                  "product": {
-                    "photo": "https://example.com/photo.jpg",
-                    "name": "Новий продукт",
-                    "price": 19.99,
-                    "article": "ABC123",
-                    "description": "Оновлений текст продукту.",
-                    "promotion": "Знижка 10% до кінця місяця",
-                    "quantity": 100,
-                    "sectionId": "603c6b2f7f2e1b001f64792c",
-                    "subSectionId": "603c6b2f7f2e1b001f64792d"
+                  "article": {
+                    "type": "number",
+                    "description": "Артикул продукту.",
+                    "example": 12345
                   },
-                  "changes": {
-                    "updatedAt": "2024-09-11T12:00:00Z",
-                    "changedFields": [
-                      "price",
-                      "description"
-                    ]
+                  "video": {
+                    "type": "string",
+                    "description": "URL відео продукту."
+                  },
+                  "rate": {
+                    "type": "number",
+                    "description": "Рейтинг продукту.",
+                    "example": 4.5
+                  },
+                  "section": {
+                    "type": "string",
+                    "description": "ID секції, до якої належить продукт.",
+                    "example": "603c6b2f7f2e1b001f64792c"
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Помилка запиту через відсутність необхідних даних або помилку валідації",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "description": "Опис помилки",
-                      "example": "Invalid product ID"
+          "responses": {
+            "200": {
+              "description": "Продукт успішно оновлено",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "description": "Повідомлення про успішне оновлення продукту.",
+                        "example": "Product successfully updated"
+                      },
+                      "product": {
+                        "type": "object",
+                        "description": "Оновлений продукт.",
+                        "properties": {
+                          "article": {
+                            "type": "number",
+                            "example": 12345
+                          },
+                          "models": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "example": "Модель 1"
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "example": 19.99
+                                },
+                                "quantity": {
+                                  "type": "integer",
+                                  "example": 100
+                                },
+                                "promotion": {
+                                  "type": "object",
+                                  "properties": {
+                                    "isActive": {
+                                      "type": "boolean",
+                                      "example": true
+                                    },
+                                    "newPrice": {
+                                      "type": "number",
+                                      "example": 17.99
+                                    }
+                                  }
+                                },
+                                "image": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "imageName": {
+                                        "type": "string",
+                                        "example": "image1.jpg"
+                                      },
+                                      "imageUrl": {
+                                        "type": "string",
+                                        "example": "https://example.com/image1.jpg"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "video": {
+                            "type": "string",
+                            "example": "https://example.com/video.mp4"
+                          },
+                          "rate": {
+                            "type": "number",
+                            "example": 4.5
+                          },
+                          "section": {
+                            "type": "string",
+                            "example": "603c6b2f7f2e1b001f64792c"
+                          }
+                        }
+                      }
                     }
-                  },
-                  "required": [
-                    "error"
-                  ]
-                },
-                "example": {
-                  "error": "Invalid product ID"
+                  }
                 }
               }
-            }
-          },
-          "404": {
-            "description": "Не знайдено продукт з вказаним ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "description": "Опис помилки",
-                      "example": "Product not found"
+            },
+            "400": {
+              "description": "Помилка запиту через відсутність необхідних даних або помилку валідації",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Опис помилки",
+                        "example": "Invalid product ID"
+                      }
                     }
-                  },
-                  "required": [
-                    "error"
-                  ]
-                },
-                "example": {
-                  "error": "Product not found"
+                  }
                 }
               }
-            }
-          },
-          "500": {
-            "description": "Внутрішня помилка сервера",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "description": "Опис помилки",
-                      "example": "Server error"
+            },
+            "404": {
+              "description": "Не знайдено продукт з вказаним ID",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Опис помилки",
+                        "example": "Product not found"
+                      }
                     }
-                  },
-                  "required": [
-                    "error"
-                  ]
-                },
-                "example": {
-                  "error": "Server error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Внутрішня помилка сервера",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Опис помилки",
+                        "example": "Server error"
+                      }
+                    }
+                  }
                 }
               }
             }
