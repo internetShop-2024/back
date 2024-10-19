@@ -26,7 +26,7 @@ mongoose.connect(mongoUri).then(() => {
     const server = app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`)
     })
-    // initSocket(server)
+    initSocket(server)
 }).catch(e => {
     console.error(e)
 })

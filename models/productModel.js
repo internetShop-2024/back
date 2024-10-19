@@ -1,11 +1,16 @@
 const mongoose = require("mongoose")
 const productSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        image: [{
+            imageName: String,
+            imageUrl: String,
+        }],
         models: [{
-            image: [{
-                imageName: String,
-                imageUrl: String,
-            }],
-            name: {
+            modelName: {
                 type: String,
                 required: true,
                 unique: true
@@ -25,16 +30,16 @@ const productSchema = new mongoose.Schema({
                 },
                 newPrice: Number,
             },
-            display: {
-                type: Boolean,
-                default: true
-            },
             description: {
                 type: String,
                 required: true
             },
             characteristics: String,
         }],
+        display: {
+            type: Boolean,
+            default: true
+        },
         article: {
             type: Number,
             required: true
@@ -64,14 +69,8 @@ const productSchema = new mongoose.Schema({
     }
 )
 
-productSchema.pre('save', function (next) {
-    if (this.quantity <= 0) {
-        this.display = false;
-    }
-    next()
-})
 productSchema.path("history").schema.set('_id', false)
-productSchema.path("models.image").schema.set('_id', false)
+productSchema.path("image").schema.set('_id', false)
 productSchema.path("models").schema.set('_id', true)
 
 const Product = mongoose.model("Product", productSchema)

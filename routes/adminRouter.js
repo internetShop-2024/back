@@ -405,11 +405,11 @@ adminRouter.post("/packs", adminValidator, upload.array("image", 4), async (req,
 
 adminRouter.post("/products", adminValidator, upload.array("image", 4), async (req, res) => {
     const {
-        name, price, article, description, sectionId, subSectionId, promotion, quantity, video, display, characteristics
+        name, article, sectionId, subSectionId, video
     } = req.body
     const images = req.files
     try {
-        if (!images?.length || !name || !price || !article || !description)
+        if (!images?.length || !name || !article)
             return res.status(400).json({error: "Заповніть всі потрібні поля"})
 
         const result = await chooseSection(sectionId, subSectionId)
@@ -417,16 +417,8 @@ adminRouter.post("/products", adminValidator, upload.array("image", 4), async (r
         const urls = await uploadMultipleFiles(images)
 
         const product = new Product({
-            models: [{
-                image: urls,
-                name: name,
-                price: price,
-                quantity: quantity,
-                promotion: promotion,
-                display: display,
-                description: description,
-                characteristics: characteristics
-            }],
+            name: name,
+            image: urls,
             article: article,
             section: result,
             video: video,
@@ -799,7 +791,7 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
     const {id} = req.query
     try {
         if (!id) {
-            const products = await Product.find({}, "models.image").lean()
+            const products = await Product.find({}, "image").lean()
             const images = await imageNames(products)
             await deleteMultipleFiles(images)
             await Product.deleteMany()
@@ -807,7 +799,7 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
         } else {
             const ids = await convertToArray(id)
-            const products = await Product.find({_id: {$in: ids}}, "models.image").lean()
+            const products = await Product.find({_id: {$in: ids}}, "image").lean()
             const images = await imageNames(products)
             await deleteMultipleFiles(images)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})

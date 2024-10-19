@@ -13,7 +13,7 @@ const productUpdateValidator = async (req, res, next) => {
         let isModified = false
 
         if (!modelId) {
-            const fieldsToUpdate = ['article', 'video', 'section', 'rate']
+            const fieldsToUpdate = ['article', 'video', 'section', 'rate', 'name', 'image', 'display']
 
             fieldsToUpdate.forEach(field => {
                 if (req.body[field] !== undefined && req.body[field] !== product[field]) {
@@ -33,7 +33,7 @@ const productUpdateValidator = async (req, res, next) => {
             const newPrice = req.body.price * (1 - discount / 100)
 
             const newModel = {
-                name: req.body.name,
+                modelName: req.body.modelName,
                 price: req.body.price,
                 quantity: req.body.quantity,
                 promotion: {
@@ -41,10 +41,8 @@ const productUpdateValidator = async (req, res, next) => {
                     discount: discount,
                     newPrice: newPrice
                 },
-                display: req.body.display !== undefined ? req.body.display : true,
                 description: req.body.description,
                 characteristics: req.body.characteristics,
-                image: []
             }
 
             if (images?.length) {
@@ -68,7 +66,7 @@ const productUpdateValidator = async (req, res, next) => {
             const discount = req.body.promotion?.discount || model.promotion?.discount || 0
             const newPrice = req.body.price ? req.body.price * (1 - discount / 100) : model.price * (1 - discount / 100)
 
-            const modelFieldsToUpdate = ['name', 'price', 'quantity', 'display', 'description', 'characteristics']
+            const modelFieldsToUpdate = ['modelName', 'price', 'quantity', 'description', 'characteristics']
 
             modelFieldsToUpdate.forEach(field => {
                 if (req.body[field] !== undefined && req.body[field] !== model[field]) {
@@ -122,7 +120,7 @@ const productUpdateValidator = async (req, res, next) => {
                 const urls = await uploadMultipleFiles(images)
                 model.image.push(...urls)
                 editHistory.push({
-                    column: `models.${modelId}.image`,
+                    column: `image`,
                     oldValue: null,
                     newValue: urls,
                     editedAt: Date.now()
