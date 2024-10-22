@@ -36,7 +36,7 @@ const {
     usersHistory,
     historyProducts,
     packProducts,
-    reviewsSenders, imageNames
+    reviewsSenders, imageNames, convertToBool
 } = require("../vars/functions")
 const url = require("node:url");
 
@@ -405,24 +405,60 @@ adminRouter.post("/packs", adminValidator, upload.array("image", 4), async (req,
 
 adminRouter.post("/products", adminValidator, upload.array("image", 4), async (req, res) => {
     const {
-        name, article, sectionId, subSectionId, video
+        name,
+        modelName,
+        article,
+        sectionId,
+        subSectionId,
+        video,
+        isSingle,
+        price,
+        quantity,
+        promotion,
+        description,
+        characteristics,
+        display
     } = req.body
     const images = req.files
     try {
-        if (!images?.length || !name || !article)
+        if (!name || !article || !isSingle)
             return res.status(400).json({error: "Заповніть всі потрібні поля"})
 
         const result = await chooseSection(sectionId, subSectionId)
 
-        const urls = await uploadMultipleFiles(images)
+        let product
 
-        const product = new Product({
-            name: name,
-            image: urls,
-            article: article,
-            section: result,
-            video: video,
-        })
+        const single = await convertToBool(isSingle)
+
+        if (single) {
+            const urls = await uploadMultipleFiles(images)
+            const model = {
+                modelName: modelName,
+                image: urls,
+                price: price,
+                quantity: quantity,
+                promotion: promotion,
+                description: description,
+                characteristics: characteristics,
+            }
+            product = new Product({
+                name: name,
+                models: [model],
+                isSingle: true,
+                display: display,
+                article: article,
+                video: video,
+                section: result
+            })
+        } else {
+            product = new Product({
+                name: name,
+                article: article,
+                section: result,
+                video: video,
+                isSingle: false,
+            })
+        }
 
         if (sectionId) {
             await Section.updateOne({_id: sectionId}, {$push: {products: product._id}})

@@ -21,7 +21,7 @@ productRouter.get("/", async (req, res) => {
 
             const data = await filterSystem(newObject)
             await modelsFilter(data)
-            data.payload["models.display"] = true
+            data.payload["display"] = true
             const totalProducts = await Product.countDocuments()
             const products = await Product.find(data.payload)
                 .select("-history")

@@ -2,40 +2,27 @@ const mongoose = require("mongoose")
 const productSchema = new mongoose.Schema({
         name: {
             type: String,
+            unique: true,
             required: true,
-            unique: true
         },
-        image: [{
-            imageName: String,
-            imageUrl: String,
-        }],
         models: [{
-            modelName: {
-                type: String,
-                required: true,
-                unique: true
-            },
-            price: {
-                type: Number,
-                required: true
-            },
-            quantity: {
-                type: Number,
-                default: 0
-            },
+            modelName: String,
+            image: [{
+                imageName: String,
+                imageUrl: String,
+            }],
+            price: Number,
+            quantity: Number,
             promotion: {
-                isActive: {
-                    type: Boolean,
-                    default: false
-                },
+                isActive: Boolean,
                 newPrice: Number,
             },
             description: {
                 type: String,
-                required: true
             },
             characteristics: String,
         }],
+        isSingle: Boolean,
         display: {
             type: Boolean,
             default: true
@@ -70,7 +57,7 @@ const productSchema = new mongoose.Schema({
 )
 
 productSchema.path("history").schema.set('_id', false)
-productSchema.path("image").schema.set('_id', false)
+productSchema.path("models.image").schema.set('_id', false)
 productSchema.path("models").schema.set('_id', true)
 
 const Product = mongoose.model("Product", productSchema)

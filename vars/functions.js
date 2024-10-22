@@ -407,7 +407,7 @@ const packProducts = async (packs) => {
 module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts, reviewsSenders,
-    imageNames, modelsFilter,
+    imageNames, modelsFilter, convertToBool,
     //PRODUCTS
     productReviews, productCategory,
     //USERS
