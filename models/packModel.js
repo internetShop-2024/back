@@ -24,9 +24,14 @@ const packSchema = new mongoose.Schema({
         section: mongoose.Schema.Types.ObjectId,
         products: [{
             product: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Product",
-                required: [true, "Продукт потрібно добавити до паку"]
+                type: {
+                    productId: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "Product",
+                        required: [true, "Продукт потрібно добавити до паку"]
+                    },
+                    modelId: mongoose.Schema.Types.ObjectId,
+                }
             },
             quantity: {
                 type: Number,
@@ -47,6 +52,7 @@ const packSchema = new mongoose.Schema({
 )
 
 packSchema.path("products").schema.set('_id', false)
+packSchema.path("products.product").schema.set('_id', false)
 packSchema.path("image").schema.set('_id', false)
 
 const Pack = mongoose.model("Pack", packSchema)

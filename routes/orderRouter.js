@@ -11,6 +11,7 @@ const monobankValidator = require("../validators/monobankValidator")
 
 const {monoXSIGN, mongoUri, monoURL, monoWEBHOOK} = require("../vars/privateVars")
 const axios = require("axios");
+const {json} = require("express");
 
 //POST
 orderRouter.post("/order", orderValidator, async (req, res) => {
@@ -23,12 +24,12 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
         city,
         address,
         customerComment,
-        managerComment
+        managerComment,
+        paymentMethod
     } = req.body
 
     try {
         const bulkOps = await quantityProducts(localStorage)
-        const {invoiceId, pageUrl} = await createInvoice(cost)
         const orderNumber = generateOrderNumber()
         const order = new Order({
             orderNumber: orderNumber,
@@ -41,8 +42,25 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
             address: address,
             customerComment: customerComment,
             managerComment: managerComment,
-            invoiceId: invoiceId,
         })
+        if (paymentMethod === "Mono") {
+            const {invoiceId, pageUrl} = await createInvoice(cost)
+            order.invoiceId = invoiceId
+            res.json({
+                message: "Замовлення успішно створено",
+                order: order,
+                pageUrl: pageUrl
+            })
+        } else {
+            res.json({
+                message: "Замовлення успішно створене",
+                order: order,
+                iban: {
+                    message: "Вам потрібно надіслати квитанцію про оплату в форматі PDF",
+                    iban: ".......Номер ібану того всього"
+                }
+            })
+        }
 
         await order.save()
 
@@ -53,11 +71,7 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
 
         await Product.bulkWrite(bulkOps)
 
-        return res.status(201).json({
-            message: "Замовлення успішно створено",
-            order: order,
-            pageUrl: pageUrl
-        })
+        return res.status(201)
     } catch (e) {
         return res.status(500).json({error: e.message})
     }

@@ -12,10 +12,19 @@ const productSchema = new mongoose.Schema({
                 imageUrl: String,
             }],
             price: Number,
-            quantity: Number,
+            quantity: {
+                type: Number,
+                default: 0
+            },
             promotion: {
-                isActive: Boolean,
-                newPrice: Number,
+                isActive: {
+                    type: Boolean,
+                    default: false
+                },
+                newPrice: {
+                    type: Number,
+                    default: null
+                },
             },
             description: {
                 type: String,

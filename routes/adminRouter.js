@@ -824,7 +824,7 @@ adminRouter.delete('/packs', adminValidator, async (req, res) => {
 })
 
 adminRouter.delete("/products", adminValidator, async (req, res) => {
-    const {id} = req.query
+    const {id, modelId} = req.query
     try {
         if (!id) {
             const products = await Product.find({}, "image").lean()

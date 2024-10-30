@@ -5,10 +5,11 @@ const productUpdateValidator = async (req, res, next) => {
     let editHistory = []
     const {id, modelId} = req.query
     const images = req.files
+    const {models} = req.body
 
     try {
         const product = await Product.findById(id)
-        if (!product) return res.status(404).json({error: "Product not found"})
+        if (!product) return res.status(404).json({error: "Продукт не знайдено"})
 
         let isModified = false
 
@@ -28,40 +29,35 @@ const productUpdateValidator = async (req, res, next) => {
                 }
             })
 
-        } else if (modelId === 'new') {
-            const discount = req.body.promotion?.discount || 0
-            const newPrice = req.body.price * (1 - discount / 100)
+        } else if (modelId === 'new' && product.isSingle === false) {
 
-            const newModel = {
-                modelName: req.body.modelName,
-                price: req.body.price,
-                quantity: req.body.quantity,
-                promotion: {
-                    isActive: req.body.promotion?.isActive || false,
+            if (!models?.length) return res.status(400).json({error: "Погано вказані модельки"})
+
+            for (const model of models) {
+                const discount = model.promotion?.discount || 0
+                const newPrice = model.price * (1 - discount / 100)
+                model.promotion = {
                     discount: discount,
                     newPrice: newPrice
-                },
-                description: req.body.description,
-                characteristics: req.body.characteristics,
+                }
+                product.models.push(model)
+
+                if (images?.length) {
+                    const urls = await uploadMultipleFiles(images)
+                    model.image.push(...urls)
+                }
+
+                editHistory.push({
+                    column: 'models',
+                    oldValue: null,
+                    newValue: model,
+                    editedAt: Date.now()
+                })
+                isModified = true
             }
-
-            if (images?.length) {
-                const urls = await uploadMultipleFiles(images)
-                newModel.image.push(...urls)
-            }
-
-            product.models.push(newModel)
-            editHistory.push({
-                column: 'models',
-                oldValue: null,
-                newValue: newModel,
-                editedAt: Date.now()
-            })
-            isModified = true
-
         } else {
             const model = product.models.id(modelId)
-            if (!model) return res.status(404).json({error: "Model not found"})
+            if (!model) return res.status(404).json({error: "Неможливо"})
 
             const discount = req.body.promotion?.discount || model.promotion?.discount || 0
             const newPrice = req.body.price ? req.body.price * (1 - discount / 100) : model.price * (1 - discount / 100)

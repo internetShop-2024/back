@@ -7,7 +7,8 @@ const initSocket = (server) => {
     const io = new Server(server, {
         cors: {
             origin: '*'
-        }
+        },
+        transports: ['polling']
     });
 
     io.on('connection', async (socket) => {

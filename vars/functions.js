@@ -313,15 +313,20 @@ const quantityProducts = async (data) => {
     })
 
     for (let i = 0; i < ids.length; i++) {
-        const product = await Product.findById(ids[i])
-        if (!product) throw new Error("Нема такого продукта")
-        if (product.quantity < quantities[i]) throw new Error(`Недостатньо для '${product.name}'`)
+        const product = await Product
+            .findOne({"models._id": ids[i]})
+            .select("name models.quantity.$")
+            .lean()
+        if (!product)
+            throw new Error("Нема такого продукта")
+        if (product.models[0].quantity < quantities[i])
+            throw new Error(`Недостатня кількість '${product.name}' для замовлення`)
     }
 
     return ids.map((id, index) => ({
         updateOne: {
-            filter: {_id: id},
-            update: {$inc: {quantity: -quantities[index], rate: +quantities[index]}},
+            filter: {"models._id": id},
+            update: {$inc: {"models.$.quantity": -quantities[index], rate: +quantities[index]}},
         }
     }))
 }
@@ -397,8 +402,8 @@ const packProducts = async (packs) => {
         if (pack?.products?.length > 0)
             for (let p of pack.products) {
                 p.product = await Product
-                    .findOne({_id: p.product})
-                    .select("name")
+                    .findOne({_id: p.product.productId, "models._id": p.product.modelId})
+                    .select("name models.$ display")
                     .lean()
             }
     }))
