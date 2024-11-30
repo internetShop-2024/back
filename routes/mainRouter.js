@@ -10,7 +10,7 @@ const chatRouter = require("../routes/chatRouter")
 const docRouter = require("../docs/docRouter")
 
 router.get("/", async (req, res) => {
-    return res.send("Життя цікаве і мотивація то є сильна")
+    return res.send("Дай боже")
 })
 
 router.use("/products", productRouter)

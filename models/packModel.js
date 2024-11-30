@@ -6,10 +6,10 @@ const packSchema = new mongoose.Schema({
             required: true,
             unique: true
         },
-        image: [{
-            imageName: String,
-            imageUrl: String,
-        }],
+        image: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: 'Image',
+        },
         video: String,
         description: String,
         quantity: {
@@ -53,7 +53,6 @@ const packSchema = new mongoose.Schema({
 
 packSchema.path("products").schema.set('_id', false)
 packSchema.path("products.product").schema.set('_id', false)
-packSchema.path("image").schema.set('_id', false)
 
 const Pack = mongoose.model("Pack", packSchema)
 

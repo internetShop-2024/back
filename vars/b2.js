@@ -1,6 +1,7 @@
 const B2 = require("backblaze-b2")
 const {b2AppId, b2AppKey, b2BukId} = require("./privateVars");
-const {file} = require("backblaze-b2/lib/actions");
+
+const Image = require("../models/imageModel")
 
 const b2 = new B2({
     applicationKeyId: b2AppId,
@@ -15,12 +16,23 @@ const authenticateB2 = async () => {
     }
 }
 
+const downloadFile = async (fileId) => {
+    try {
+        await authenticateB2()
+        const file = await b2.getFileInfo({fileId})
+        return `https://f003.backblazeb2.com/file/InternetMagas2024/${file.data.fileName.replace(/ /g, '+')}`
+    } catch (e) {
+        throw new Error(e)
+    }
+}
+
 const deleteFile = async (fileName) => {
     try {
         const fileList = await b2.listFileNames({bucketId: b2BukId, prefix: fileName})
         if (fileList.data.files.length > 0) {
             const fileId = fileList.data.files[0].fileId
             await b2.deleteFileVersion({fileName: fileName, fileId: fileId})
+            await Image.deleteOne({imageId: fileId})
         }
     } catch (e) {
         return e.message
@@ -29,7 +41,6 @@ const deleteFile = async (fileName) => {
 
 const uploadFile = async (file) => {
     try {
-        await deleteFile(file.originalname)
         const uploadUrlResponse = await b2.getUploadUrl({bucketId: b2BukId})
 
         const uploadedFile = await b2.uploadFile({
@@ -39,13 +50,30 @@ const uploadFile = async (file) => {
             mime: file.mimetype,
             data: file.buffer,
         })
-        const imageUrl = `https://f003.backblazeb2.com/file/InternetMagas2024/${file.originalname.replace(/ /g, '+')}`
-        return {imageName: file.originalname, imageUrl}
+
+        const newFile = new Image({
+            imageId: uploadedFile.data.fileId,
+            imageName: uploadedFile.data.fileName,
+        })
+
+        await newFile.save()
+
+        return newFile._id
     } catch (e) {
         throw new Error(e)
     }
 }
 
+const downloadMultipleFiles = async (files) => {
+    try {
+        await authenticateB2()
+        return await Promise.all(files.map(async file => {
+            await downloadFile(file)
+        }))
+    } catch (e) {
+        throw new Error(e)
+    }
+}
 
 const uploadMultipleFiles = async (files) => {
     try {
@@ -56,10 +84,10 @@ const uploadMultipleFiles = async (files) => {
     }
 }
 
-const deleteMultipleFiles = async (files) => {
+const deleteMultipleFiles = async (fileNames) => {
     try {
         await authenticateB2()
-        await Promise.all(files.map(async (file) => await deleteFile(file)))
+        await Promise.all(fileNames.map(async (file) => await deleteFile(file)))
     } catch (e) {
         throw new Error(e)
     }
@@ -67,5 +95,8 @@ const deleteMultipleFiles = async (files) => {
 
 module.exports = {
     uploadMultipleFiles,
-    deleteMultipleFiles
+    deleteMultipleFiles,
+    downloadMultipleFiles,
+    deleteFile,
+    downloadFile,
 }

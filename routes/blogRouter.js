@@ -2,6 +2,7 @@ const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
 
 const {perPage} = require("../vars/publicVars")
+const {imageDownload} = require("../vars/functions");
 
 //GET
 blogRouter.get('/', async (req, res) => {
@@ -14,11 +15,13 @@ blogRouter.get('/', async (req, res) => {
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .lean()
+            await imageDownload(posts)
             return res.status(200).json({
                 posts: posts, currentPage: page, totalPages: Math.ceil(totalPosts / perPage)
             })
         } else {
             const post = await Blog.findById(id)
+            await imageDownload([post])
             if (!post) {
                 return res.status(404).json({error: 'Нема поста'})
             }

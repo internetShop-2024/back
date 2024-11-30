@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken')
 const axios = require("axios");
 const {Parser} = require("json2csv")
 
-const {secretJWT, secretRT, secretAT, monoURL, monoWEBHOOK, monoXSIGN} = require("./privateVars")
+const {secretJWT, secretRT, secretAT, monoURL, monoWEBHOOK, monoXSIGN, port} = require("./privateVars")
 
 const Review = require("../models/reviewModel")
 const Product = require("../models/productModel")
@@ -12,23 +12,74 @@ const User = require("../models/userModel")
 const Order = require("../models/orderModel")
 const Section = require("../models/sectionModel")
 const Pack = require("../models/packModel")
+const Image = require("../models/imageModel")
+
+const {downloadFile} = require("../vars/b2")
+const {deleteFile} = require("./b2");
 
 //ADMIN
-const imageNames = async (data) => {
+const imageDownload = async (data) => {
     try {
-        let images = []
-
         for (const obj of data) {
-            if (obj.image) images.push(...obj.image.map(image => image.imageName))
-            if (Array.isArray(obj.models)) {
+            if (obj.models?.length) {
                 for (const model of obj.models) {
-                    console.log(model)
-                    images.push(...model.image.map(image => image.imageName))
+                    if (model.image?.length) {
+                        model.image = await Promise.all(
+                            model.image.map(async img => {
+                                let file = await Image.findById(img).select('imageId').lean()
+                                if (!file) return 'File not found'
+                                return {
+                                    imageUrl: await downloadFile(file?.imageId),
+                                    imageId: file._id
+                                }
+                            })
+                        );
+                    }
                 }
+            } else if (obj.image?.length) {
+                obj.image = await Promise.all(
+                    obj.image.map(async img => {
+                        let file = await Image.findById(img).select('imageId').lean()
+                        if (!file) return 'File not found'
+                        return {
+                            imageUrl: await downloadFile(file?.imageId),
+                            imageId: file._id
+                        }
+                    })
+                )
             }
         }
+    } catch (e) {
+        throw new Error(e.message)
+    }
+}
 
-        return images
+const imageDelete = async (data) => {
+    try {
+        for (const obj of data) {
+            if (obj.models?.length) {
+                for (const model of obj.models) {
+                    if (model.image?.length) {
+                        model.image = await Promise.all(
+                            model.image.map(async img => {
+                                let file = await Image.findById(img).select('imageName').lean()
+                                if (!file) return 'File not found'
+                                await deleteFile(file.imageName)
+                            })
+                        );
+                    }
+                }
+            } else if (obj.image?.length) {
+                console.log(obj)
+                obj.image = await Promise.all(
+                    obj.image.map(async img => {
+                        let file = await Image.findById(img).select('imageName').lean()
+                        if (!file) return 'File not found'
+                        await deleteFile(file.imageName)
+                    })
+                )
+            }
+        }
     } catch (e) {
         throw new Error(e.message)
     }
@@ -292,6 +343,14 @@ const validateToken = async (token, secret) => {
 }
 
 //ORDERS
+
+const handleNullableField = (field, defaultValue) => {
+    if (field && field[0] && field[0].$ && field[0].$?.['xsi:nil'] === 'true') {
+        return defaultValue;
+    }
+    return field?.[0]?.toString() || defaultValue
+}
+
 const generateOrderNumber = () => {
     return 'ORDER-' + Date.now()
 }
@@ -356,7 +415,7 @@ const createInvoice = async (cost) => {
 
 //SECTIONS
 const sectionProducts = async (section) => {
-    const products = await Product.find({section: section._id}).select("-__v -section").lean()
+    const products = await Product.find({section: section._id}).select("section").lean()
     section.products = await productReviews(products)
     return section
 }
@@ -364,11 +423,15 @@ const sectionProducts = async (section) => {
 const sectionSubSections = async (data) => {
     try {
         if (!data.length) {
-            const subSections = await SubSection.find({_id: {$in: data.subSections}}).select("-__v").lean()
+            const subSections = await SubSection.find({_id: {$in: data.subSections}}).lean()
             await Promise.all(subSections.map(async subSection => {
                 if (subSection.products.length > 0) {
-                    const products = await Product.find({section: subSection._id}).select("-__v").lean()
+                    let products = await Product.find({section: subSection._id}).lean()
+                    await imageDownload(products)
                     subSection.products = await productReviews(products)
+                }
+                if (subSection.image?.length) {
+                    await imageDownload([subSection])
                 }
             }))
             data.subSections = subSections
@@ -412,7 +475,7 @@ const packProducts = async (packs) => {
 module.exports = {
     //ADMINS
     convertToArray, filterSystem, export2csvSystem, chooseSection, usersHistory, historyProducts, reviewsSenders,
-    imageNames, modelsFilter, convertToBool,
+    imageDownload, imageDelete, modelsFilter, convertToBool,
     //PRODUCTS
     productReviews, productCategory,
     //USERS
@@ -420,7 +483,7 @@ module.exports = {
     //TOKEN
     tokenAssign, validateToken, adminTokenAssign,
     //ORDERS
-    generateOrderNumber, orderProducts, quantityProducts, createInvoice,
+    generateOrderNumber, orderProducts, quantityProducts, createInvoice, handleNullableField,
     //SECTIONS
     sectionProducts, sectionSubSections,
     //PACKS

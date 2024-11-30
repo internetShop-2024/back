@@ -230,7 +230,7 @@ userRouter.post("/review", authValidator, async (req, res) => {
 
 //PUT
 userRouter.put('/profile', authValidator, async (req, res) => {
-    const {phone, city, address} = req.body
+    const {phone, city, address, deliveryType} = req.body
     try {
         const user = await User
             .findById(req.userId)
@@ -244,6 +244,7 @@ userRouter.put('/profile', authValidator, async (req, res) => {
         if (phone) user.phone = phone
         if (city) user.city = city
         if (address) user.address = address
+        if (deliveryType) user.deliveryType = deliveryType
 
         await user.save()
 

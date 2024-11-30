@@ -12,6 +12,7 @@ const monoWEBHOOK = process.env.MONO_WEBHOOK
 const b2AppId = process.env.B2_APPID
 const b2AppKey = process.env.B2_APPKEY
 const b2BukId = process.env.B2_BUKID
+const ukrPochta = process.env.UKRPOCHTA_URL
 
 module.exports = {
     port,
@@ -25,5 +26,6 @@ module.exports = {
     monoWEBHOOK,
     b2AppId,
     b2AppKey,
-    b2BukId
+    b2BukId,
+    ukrPochta
 }

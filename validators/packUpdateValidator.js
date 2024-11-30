@@ -3,7 +3,7 @@ const {chooseSection} = require("../vars/functions")
 
 const packUpdateValidator = async (req, res, next) => {
     const {id} = req.query
-    const {photo, article, packName, price, sectionId, subSectionId, products, video, description, quantity} = req.body
+    const {image, photo, article, packName, price, sectionId, subSectionId, products, video, description, quantity} = req.body
     try {
         const pack = await Pack.findById(id)
         if (!pack) return res.status(404).json({error: "Pack not found"})
@@ -17,8 +17,9 @@ const packUpdateValidator = async (req, res, next) => {
         if (sectionId && sectionId !== pack.section) updatedFields.section = await chooseSection(sectionId, subSectionId)
         if (products?.length) updatedFields.products = products
         if (video && video !== pack.video) updatedFields.video = video
-        if (description && description !== pack.description) updatedFields.video = video
-        if (quantity && quantity !== pack.quantity) updatedFields.quantity = quantity
+        if (description && description !== pack.description) updatedFields.description = description
+        if (image && image !== pack.image) updatedFields.quantity = quantity
+        if (image && image !== pack.image) updatedFields.image = image
 
         req.updatedFields = updatedFields
         req.pack = pack

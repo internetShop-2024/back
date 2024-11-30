@@ -2,7 +2,7 @@ const productRouter = require("express").Router()
 
 const Product = require("../models/productModel")
 
-const {productReviews, filterSystem, productCategory, modelsFilter} = require("../vars/functions")
+const {productReviews, filterSystem, productCategory, modelsFilter, imageDownload} = require("../vars/functions")
 const {perPage} = require("../vars/publicVars")
 
 //GET
@@ -34,6 +34,7 @@ productRouter.get("/", async (req, res) => {
 
             await productReviews(products)
             await productCategory(products)
+            await imageDownload(products)
 
             return res.status(200).json({
                 products: products, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
@@ -43,6 +44,8 @@ productRouter.get("/", async (req, res) => {
             if (!product) return res.status(404).json({error: "Нема продуктів"})
             await productReviews([product])
             await productCategory([product])
+            await imageDownload([product])
+
             if (!product)
                 return res.status(404).json({message: "Нема продуктів"})
 

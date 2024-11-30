@@ -13,10 +13,10 @@ const chatSchema = new mongoose.Schema({
         },
         messages: [{
             text: String,
-            image: [{
-                imageName: String,
-                imageUrl: String,
-            }],
+            image: {
+                type: [mongoose.Schema.Types.ObjectId],
+                ref: 'Image',
+            },
             sender: mongoose.Schema.Types.ObjectId,
             sendAt: Date
         }],
@@ -30,7 +30,6 @@ const chatSchema = new mongoose.Schema({
 )
 
 chatSchema.path("messages").schema.set("_id", false)
-chatSchema.path("messages.image").schema.set("_id", false)
 
 const Chat = mongoose.model("Chat", chatSchema)
 

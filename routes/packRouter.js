@@ -3,7 +3,7 @@ const packRouter = require("express").Router()
 const Pack = require("../models/packModel")
 
 const {perPage} = require("../vars/publicVars")
-const {filterSystem} = require("../vars/functions")
+const {filterSystem, imageDownload} = require("../vars/functions")
 
 packRouter.get("/", async (req, res) => {
     const page = parseInt(req.query.page) || 1
@@ -28,6 +28,7 @@ packRouter.get("/", async (req, res) => {
                 .sort(data.sortOptions)
                 .lean()
             if (!packs.length) return res.status(404).json({error: "Нема паків"})
+            await imageDownload(packs)
             return res.status(200).json({
                 packs: packs, currentPage: page, totalPages: Math.ceil(totalPacks / perPage)
             })

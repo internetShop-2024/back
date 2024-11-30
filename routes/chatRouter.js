@@ -9,7 +9,7 @@ const authValidator = require("../validators/authValidator")
 
 const upload = require("../vars/multer")
 const {uploadMultipleFiles, deleteMultipleFiles} = require("../vars/b2")
-const {imageNames, validatePhone} = require("../vars/functions");
+const {imageNames, validatePhone, imageDownload, imageDelete} = require("../vars/functions");
 
 chatRouter.get("/expires", async (req, res) => {
     try {
@@ -17,10 +17,9 @@ chatRouter.get("/expires", async (req, res) => {
         const oneWeekAgo = new Date(Date.now() - 60 * 1000)
         const chats = await Chat.find({createdAt: {$lt: oneWeekAgo}}, "messages.image").lean()
         const allMessages = chats.map(chat => chat.messages).flat()
-        const urls = await imageNames(allMessages)
+        await imageDelete(allMessages)
 
         await Chat.deleteMany({createdAt: {$lt: oneWeekAgo}})
-        await deleteMultipleFiles(urls)
         return res.status(200).json({message: "Successfully expired"})
     } catch (e) {
         return res.status(500).json({error: e.message})

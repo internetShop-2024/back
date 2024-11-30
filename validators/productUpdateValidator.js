@@ -1,15 +1,11 @@
-const Product = require("../models/productModel")
-const {uploadMultipleFiles} = require("../vars/b2")
-
 const productUpdateValidator = async (req, res, next) => {
     let editHistory = []
-    const {id, modelId} = req.query
-    const images = req.files
-    const {models} = req.body
+    const { id, modelId } = req.query
+    const { models } = req.body
 
     try {
         const product = await Product.findById(id)
-        if (!product) return res.status(404).json({error: "Продукт не знайдено"})
+        if (!product) return res.status(404).json({ error: "Продукт не знайдено" })
 
         let isModified = false
 
@@ -31,7 +27,7 @@ const productUpdateValidator = async (req, res, next) => {
 
         } else if (modelId === 'new' && product.isSingle === false) {
 
-            if (!models?.length) return res.status(400).json({error: "Погано вказані модельки"})
+            if (!models?.length) return res.status(400).json({ error: "Погано вказані модельки" })
 
             for (const model of models) {
                 const discount = model.promotion?.discount || 0
@@ -41,11 +37,6 @@ const productUpdateValidator = async (req, res, next) => {
                     newPrice: newPrice
                 }
                 product.models.push(model)
-
-                if (images?.length) {
-                    const urls = await uploadMultipleFiles(images)
-                    model.image.push(...urls)
-                }
 
                 editHistory.push({
                     column: 'models',
@@ -57,12 +48,12 @@ const productUpdateValidator = async (req, res, next) => {
             }
         } else {
             const model = product.models.id(modelId)
-            if (!model) return res.status(404).json({error: "Неможливо"})
+            if (!model) return res.status(404).json({ error: "Неможливо" })
 
             const discount = req.body.promotion?.discount || model.promotion?.discount || 0
             const newPrice = req.body.price ? req.body.price * (1 - discount / 100) : model.price * (1 - discount / 100)
 
-            const modelFieldsToUpdate = ['modelName', 'price', 'quantity', 'description', 'characteristics']
+            const modelFieldsToUpdate = ['modelName', 'price', 'quantity', 'description', 'characteristics', 'image']
 
             modelFieldsToUpdate.forEach(field => {
                 if (req.body[field] !== undefined && req.body[field] !== model[field]) {
@@ -76,6 +67,19 @@ const productUpdateValidator = async (req, res, next) => {
                     isModified = true
                 }
             })
+
+            if (req.body.image) {
+                if (JSON.stringify(req.body.image) !== JSON.stringify(model.image)) {
+                    editHistory.push({
+                        column: `models.${modelId}.image`,
+                        oldValue: model.image,
+                        newValue: req.body.image,
+                        editedAt: Date.now()
+                    })
+                    model.image = req.body.image
+                    isModified = true
+                }
+            }
 
             if (req.body.promotion) {
                 if (req.body.promotion.isActive !== undefined && req.body.promotion.isActive !== model.promotion.isActive) {
@@ -112,18 +116,6 @@ const productUpdateValidator = async (req, res, next) => {
                 isModified = true
             }
 
-            if (images?.length) {
-                const urls = await uploadMultipleFiles(images)
-                model.image.push(...urls)
-                editHistory.push({
-                    column: `image`,
-                    oldValue: null,
-                    newValue: urls,
-                    editedAt: Date.now()
-                })
-                isModified = true
-            }
-
             if (model.quantity <= 0) {
                 model.display = false
             }
@@ -132,8 +124,8 @@ const productUpdateValidator = async (req, res, next) => {
         if (isModified) {
             if (editHistory.length > 0) {
                 await Product.updateOne(
-                    {_id: id},
-                    {$push: {history: {$each: editHistory}}}
+                    { _id: id },
+                    { $push: { history: { $each: editHistory } } }
                 )
             }
 
@@ -145,7 +137,7 @@ const productUpdateValidator = async (req, res, next) => {
         next()
 
     } catch (e) {
-        return res.status(400).json({error: e.message})
+        return res.status(400).json({ error: e.message })
     }
 }
 

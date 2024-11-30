@@ -7,10 +7,10 @@ const productSchema = new mongoose.Schema({
         },
         models: [{
             modelName: String,
-            image: [{
-                imageName: String,
-                imageUrl: String,
-            }],
+            image: {
+                type: [mongoose.Schema.Types.ObjectId],
+                ref: 'Image',
+            },
             price: Number,
             quantity: {
                 type: Number,
@@ -66,7 +66,6 @@ const productSchema = new mongoose.Schema({
 )
 
 productSchema.path("history").schema.set('_id', false)
-productSchema.path("models.image").schema.set('_id', false)
 productSchema.path("models").schema.set('_id', true)
 
 const Product = mongoose.model("Product", productSchema)

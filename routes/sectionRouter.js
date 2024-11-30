@@ -4,7 +4,7 @@ const Section = require("../models/sectionModel")
 const SubSection = require("../models/subSectionModel")
 const Product = require("../models/productModel")
 
-const {sectionProducts, sectionSubSections, productReviews, sectionPacks, convertToArray} = require("../vars/functions");
+const {sectionProducts, sectionSubSections, productReviews, sectionPacks, convertToArray, imageDownload} = require("../vars/functions");
 
 const {perPage} = require("../vars/publicVars");
 
@@ -20,6 +20,7 @@ sectionRouter.get("/", async (req, res) => {
                 .limit(perPage)
                 .lean()
             await sectionSubSections(sections)
+            await imageDownload(sections)
             return res.status(200).json({
                 sections: sections, currentPage: page, totalPages: Math.ceil(totalSections / perPage)
             })
@@ -39,6 +40,9 @@ sectionRouter.get("/", async (req, res) => {
             if (section.packs?.length > 0) {
                 await sectionPacks(section)
             }
+
+            await imageDownload([section])
+
             return res.status(200).json({section: section})
         }
     } catch (e) {
@@ -58,6 +62,8 @@ sectionRouter.get("/subsections", async (req, res) => {
                 .skip((page - 1) * perPage)
                 .limit(perPage)
                 .lean()
+
+            await imageDownload(subSections)
             return res.status(200).json({
                 subSection: subSections, currentPage: page, totalPages: Math.ceil(totalSubSections / perPage)
             })
@@ -69,6 +75,7 @@ sectionRouter.get("/subsections", async (req, res) => {
 
             const products = await Product.find({section: {$in: subsection._id}}).lean()
             subsection.products = await productReviews(products)
+            await imageDownload([subsection])
 
             return res.status(200).json({subsection: subsection})
         }
