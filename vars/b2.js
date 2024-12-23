@@ -19,8 +19,9 @@ const authenticateB2 = async () => {
 const downloadFile = async (fileId) => {
     try {
         await authenticateB2()
-        const file = await b2.getFileInfo({fileId})
-        return `https://f003.backblazeb2.com/file/InternetMagas2024/${file.data.fileName.replace(/ /g, '+')}`
+        const file = await Image.findById(fileId).select('imageName').lean()
+        if (!file) return "File not Found"
+        return `https://f003.backblazeb2.com/file/InternetMagas2024/${file?.imageName.replace(/ /g, '+')}`
     } catch (e) {
         throw new Error(e)
     }

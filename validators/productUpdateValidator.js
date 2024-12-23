@@ -1,11 +1,13 @@
+const Product = require("../models/productModel");
+
 const productUpdateValidator = async (req, res, next) => {
     let editHistory = []
-    const { id, modelId } = req.query
-    const { models } = req.body
+    const {id, modelId} = req.query
+    const {models} = req.body
 
     try {
         const product = await Product.findById(id)
-        if (!product) return res.status(404).json({ error: "Продукт не знайдено" })
+        if (!product) return res.status(404).json({error: "Продукт не знайдено"})
 
         let isModified = false
 
@@ -27,7 +29,7 @@ const productUpdateValidator = async (req, res, next) => {
 
         } else if (modelId === 'new' && product.isSingle === false) {
 
-            if (!models?.length) return res.status(400).json({ error: "Погано вказані модельки" })
+            if (!models?.length) return res.status(400).json({error: "Погано вказані модельки"})
 
             for (const model of models) {
                 const discount = model.promotion?.discount || 0
@@ -48,7 +50,7 @@ const productUpdateValidator = async (req, res, next) => {
             }
         } else {
             const model = product.models.id(modelId)
-            if (!model) return res.status(404).json({ error: "Неможливо" })
+            if (!model) return res.status(404).json({error: "Неможливо"})
 
             const discount = req.body.promotion?.discount || model.promotion?.discount || 0
             const newPrice = req.body.price ? req.body.price * (1 - discount / 100) : model.price * (1 - discount / 100)
@@ -124,8 +126,8 @@ const productUpdateValidator = async (req, res, next) => {
         if (isModified) {
             if (editHistory.length > 0) {
                 await Product.updateOne(
-                    { _id: id },
-                    { $push: { history: { $each: editHistory } } }
+                    {_id: id},
+                    {$push: {history: {$each: editHistory}}}
                 )
             }
 
@@ -137,7 +139,7 @@ const productUpdateValidator = async (req, res, next) => {
         next()
 
     } catch (e) {
-        return res.status(400).json({ error: e.message })
+        return res.status(400).json({error: e.message})
     }
 }
 

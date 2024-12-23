@@ -26,10 +26,10 @@ const imageDownload = async (data) => {
                     if (model.image?.length) {
                         model.image = await Promise.all(
                             model.image.map(async img => {
-                                let file = await Image.findById(img).select('imageId').lean()
+                                let file = await Image.findById(img).select('_id').lean()
                                 if (!file) return 'File not found'
                                 return {
-                                    imageUrl: await downloadFile(file?.imageId),
+                                    imageUrl: await downloadFile(file?._id),
                                     imageId: file._id
                                 }
                             })
@@ -39,10 +39,10 @@ const imageDownload = async (data) => {
             } else if (obj.image?.length) {
                 obj.image = await Promise.all(
                     obj.image.map(async img => {
-                        let file = await Image.findById(img).select('imageId').lean()
+                        let file = await Image.findById(img).select('_id').lean()
                         if (!file) return 'File not found'
                         return {
-                            imageUrl: await downloadFile(file?.imageId),
+                            imageUrl: await downloadFile(file?._id),
                             imageId: file._id
                         }
                     })

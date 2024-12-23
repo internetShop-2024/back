@@ -10,7 +10,7 @@ const {generateOrderNumber, createInvoice, quantityProducts, handleNullableField
 const orderValidator = require("../validators/orderValidator")
 const monobankValidator = require("../validators/monobankValidator")
 
-const {monoXSIGN, mongoUri, monoURL, monoWEBHOOK, ukrPochta} = require("../vars/privateVars")
+const {monoXSIGN, mongoUri, monoURL, monoWEBHOOK, ukrPochta, iban} = require("../vars/privateVars")
 const axios = require("axios");
 
 //POST
@@ -36,8 +36,9 @@ orderRouter.post('/ukrpochta', async (req, res) => {
 
             result = result.Entries.Entry
 
-            // Використовуємо Promise.all для асинхронних запитів
-            await Promise.all(result.map(async (city) => {
+            if (!result) return res.status(404).json({error: "Місто не знайдено"})
+
+            await Promise.all(result?.map(async (city) => {
                 const office = await axios.get(`${ukrPochta}/get_postoffices_by_postcode_cityid_cityvpzid?city_id=${city.CITY_ID.toString()}`, {
                     headers: {
                         'Authorization': "Bearer cadc506b-4be0-3663-8a2f-b1f6c71a90a1",
@@ -50,8 +51,9 @@ orderRouter.post('/ukrpochta', async (req, res) => {
                         console.error("Error parsing XML:", err)
                         return
                     }
+
                     result = result.Entries.Entry
-                    const data = result.map((office) => {
+                    const data = result?.map((office) => {
                         if (office.LOCK_CODE.toString() === '0') {
                             return {
                                 id: office.POSTOFFICE_ID.toString(),
@@ -59,7 +61,7 @@ orderRouter.post('/ukrpochta', async (req, res) => {
                                 adress: handleNullableField(office.STREET_UA_VPZ, "Невідомо вулицю")
                             }
                         }
-                    }).filter(item => item) // Фільтруємо undefined значення
+                    }).filter(item => item)
 
                     const response = {
                         city: {
@@ -124,7 +126,7 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
                 order: order,
                 iban: {
                     message: "Вам потрібно надіслати квитанцію про оплату в форматі PDF",
-                    iban: ".......Номер ібану того всього"
+                    iban: iban
                 }
             })
         }
