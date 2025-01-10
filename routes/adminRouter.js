@@ -214,6 +214,9 @@ adminRouter.get('/orders', adminValidator, async (req, res) => {
             if (!orders.length)
                 return res.status(404).json({message: "Нема замовлень"})
 
+            await orderProducts(orders)
+
+
             return res.status(200).json({
                 orders: orders, currentPage: page, totalPages: Math.ceil(totalProducts / perPage)
             })
@@ -222,7 +225,7 @@ adminRouter.get('/orders', adminValidator, async (req, res) => {
             if (!order)
                 return res.status(404).json({error: 'Нема замовлень'})
 
-            await orderProducts(order)
+            await orderProducts([order])
 
             return res.status(200).json({order: order})
         }

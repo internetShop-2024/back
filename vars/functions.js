@@ -355,11 +355,15 @@ const generateOrderNumber = () => {
     return 'ORDER-' + Date.now()
 }
 
-const orderProducts = async (order) => {
-    return await Promise.all(order.localStorage.map(async item => {
-        let product = await Product.findById(item.goodsId)
-        if (!product) product = "The product has been removed"
-        return {product: product, quantity: item.quantity}
+const orderProducts = async (orders) => {
+    return await Promise.all(orders.map(async (item) => {
+        for (let product of item.localStorage) {
+            let goods = await Product.findOne({"models._id": product.goodsId}).lean()
+            if (!goods) goods = 'Продукт не існує'
+            await imageDownload([goods])
+            product.goodsId = goods
+        }
+        console.log(item)
     }))
 }
 

@@ -112,16 +112,36 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
             customerComment: customerComment,
             managerComment: managerComment,
         })
+
+
         if (paymentMethod === "Mono") {
-            const {invoiceId, pageUrl} = await createInvoice(cost)
+            const { invoiceId, pageUrl } = await createInvoice(cost)
             order.invoiceId = invoiceId
-            res.json({
+            await order.save()
+
+            await User.updateOne(
+                { phone: phone },
+                { $push: { history: order._id } }
+            )
+
+            await Product.bulkWrite(bulkOps)
+
+            return res.status(201).json({
                 message: "Замовлення успішно створено",
                 order: order,
                 pageUrl: pageUrl
             })
         } else {
-            res.json({
+            await order.save()
+
+            await User.updateOne(
+                { phone: phone },
+                { $push: { history: order._id } }
+            )
+
+            await Product.bulkWrite(bulkOps)
+
+            return res.status(201).json({
                 message: "Замовлення успішно створене",
                 order: order,
                 iban: {
@@ -130,26 +150,15 @@ orderRouter.post("/order", orderValidator, async (req, res) => {
                 }
             })
         }
-
-        await order.save()
-
-        await User.updateOne(
-            {phone: phone},
-            {$push: {history: order._id}}
-        )
-
-        await Product.bulkWrite(bulkOps)
-
-        return res.status(201)
     } catch (e) {
-        return res.status(500).json({error: e.message})
+        return res.status(500).json({ error: e.message })
     }
 })
 
 orderRouter.post("/pay-status", monobankValidator, async (req, res) => {
-    const {invoiceId} = req.body;
+    const {invoiceId} = req.body
     try {
-        await axios.get(
+        const response = await axios.get(
             `${monoURL}/invoice/status`,
             {
                 headers: {
@@ -157,23 +166,21 @@ orderRouter.post("/pay-status", monobankValidator, async (req, res) => {
                 },
                 params: {invoiceId}
             }
-        ).then(async response => {
-            if (response.data.status === "expired") {
-                await Order.updateOne({invoiceId: invoiceId}, {status: "cancelled"})
-                return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
-            } else if (response.data.status === "success") {
-                await Order.updateOne({invoiceId: invoiceId}, {
-                    payment: true,
-                    status: "inProcess"
-                })
-                return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
-            }
-        }).catch(e => {
-            throw new Error(e)
-        })
-        return res.status(400)
+        )
+
+        if (response.data.status === "expired") {
+            await Order.updateOne({invoiceId: invoiceId}, {status: "cancelled"})
+            return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
+        } else if (response.data.status === "success") {
+            await Order.updateOne({invoiceId: invoiceId}, {
+                payment: true,
+                status: "inProcess"
+            })
+            return res.status(200).header("X-Sign", monoXSIGN).json({message: "Updated"})
+        }
+        return res.status(400).json({message: "Invalid status"})
     } catch (e) {
-        return res.status(500)
+        return res.status(500).json({message: "Internal Server Error"})
     }
 })
 
