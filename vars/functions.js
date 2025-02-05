@@ -70,7 +70,6 @@ const imageDelete = async (data) => {
                     }
                 }
             } else if (obj.image?.length) {
-                console.log(obj)
                 obj.image = await Promise.all(
                     obj.image.map(async img => {
                         let file = await Image.findById(img).select('imageName').lean()
@@ -363,7 +362,6 @@ const orderProducts = async (orders) => {
             await imageDownload([goods])
             product.goodsId = goods
         }
-        console.log(item)
     }))
 }
 

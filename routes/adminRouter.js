@@ -384,7 +384,6 @@ adminRouter.post('/posts', adminValidator, upload.array("image", 4), async (req,
         if (!images?.length || !title || !text) return res.status(400).json({error: "Заповніть всі потрібні поля"})
 
         const urls = await uploadMultipleFiles(images)
-        console.log(urls)
         const newPost = new Blog({
             title: title,
             text: text,
@@ -463,10 +462,15 @@ adminRouter.post("/products", adminValidator, upload.array("image", 4), async (r
         if (!name || !article || !isSingle)
             return res.status(400).json({error: "Заповніть всі потрібні поля"})
 
+        const single = await convertToBool(isSingle)
+
+        if (single && (!price || !quantity || !description)) {
+            return res.status(400).json({error: "Заповніть всі потрібні поля"})
+        }
+
         const result = await chooseSection(sectionId, subSectionId)
 
         let product
-        const single = await convertToBool(isSingle)
 
         if (single) {
             const urls = await uploadMultipleFiles(images)
@@ -715,7 +719,6 @@ adminRouter.put("/products", adminValidator, productUpdateValidator, async (req,
     try {
         return res.status(200).json({message: "Продукт успішно змінено"})
     } catch (e) {
-        console.log(e.message)
         return res.status(500).json({error: e.message})
     }
 })
@@ -855,7 +858,7 @@ adminRouter.delete('/packs', adminValidator, async (req, res) => {
 })
 
 adminRouter.delete("/products", adminValidator, async (req, res) => {
-    const {id} = req.query
+    const {id, modelId} = req.query
     try {
         if (!id) {
             const products = await Product.find({}).select('models').lean()
@@ -863,15 +866,27 @@ adminRouter.delete("/products", adminValidator, async (req, res) => {
             await Section.updateMany({}, {$pull: {products: {$in: []}}})
             await SubSection.updateMany({}, {$pull: {products: {$in: []}}})
             await Product.deleteMany({})
-        } else {
+        } else if (id && !modelId) {
             const ids = await convertToArray(id)
             const products = await Product.find({_id: {$in: ids}}, "image").lean()
             await imageDelete(products)
             await Section.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await SubSection.updateMany({products: {$in: ids}}, {$pull: {products: {$in: ids}}})
             await Product.deleteMany({_id: {$in: ids}})
+        } else {
+            const ids = await convertToArray(id)
+            const modelsIds = await convertToArray(modelId)
+            const products = await Product.find({
+                _id: {$in: ids},
+                "models._id": {$in: modelsIds}
+            }).select('models').lean()
+            await imageDelete(products)
+            await Product.updateMany(
+                {_id: {$in: ids}},
+                {$pull: {models: {_id: {$in: modelsIds}}}}
+            )
         }
-        return res.status(201).json({message: "Успішно видалено"})
+        return res.status(200).json({message: "Успішно видалено"})
     } catch (e) {
         return res.status(500).json({error: e.message})
     }
